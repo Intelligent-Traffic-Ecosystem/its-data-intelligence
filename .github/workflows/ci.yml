@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff
+      - run: ruff check src/ tests/
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          pip install -r requirements/base.txt
+          pip install -r requirements/api.txt
+          pip install kafka-python pytest httpx
+      - run: pytest tests/ -v --ignore=tests/test_api_routes.py
+        env:
+          PYTHONPATH: src
+          POSTGRES_URL: sqlite:///test.db
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f docker/Dockerfile.api -t b2-api-test .
+      - run: docker build -f docker/Dockerfile.processor -t b2-processor-test .

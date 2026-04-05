@@ -1,0 +1,58 @@
+from datetime import datetime
+
+from pydantic import BaseModel, Field
+
+
+# --- Input event from B1 via Kafka ---
+
+class BBox(BaseModel):
+    x: int
+    y: int
+    w: int
+    h: int
+
+
+class Centroid(BaseModel):
+    x: int
+    y: int
+
+
+class TrafficEventInput(BaseModel):
+    camera_id: str
+    timestamp: datetime
+    frame_id: int
+    vehicle_id: str
+    vehicle_class: str = Field(alias="class")
+    confidence: float = Field(ge=0, le=1)
+    bbox: BBox
+    centroid: Centroid
+    lane_id: int | None = None
+    speed_estimate: float | None = None
+
+    model_config = {"populate_by_name": True}
+
+
+# --- Output metric to B3 via REST / WebSocket ---
+
+class TrafficMetricOutput(BaseModel):
+    camera_id: str
+    window_start: datetime
+    window_end: datetime
+    vehicle_count: int
+    counts_by_class: dict[str, int]
+    avg_speed_kmh: float
+    stopped_ratio: float
+    queue_length: int
+    congestion_level: str
+    congestion_score: float
+
+
+class CameraInfo(BaseModel):
+    camera_id: str
+    last_seen: datetime | None = None
+
+
+class HealthResponse(BaseModel):
+    status: str
+    kafka: str
+    postgres: str
