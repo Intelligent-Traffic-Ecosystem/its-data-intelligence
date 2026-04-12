@@ -3,15 +3,18 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from shared.db import engine
+from shared.logging_setup import configure_logging
 from shared.models import Base
 from api.routes import cameras, congestion, health, metrics
 from api.websocket import router as ws_router
 from api.prometheus import router as prom_router
 
+configure_logging("b2-api")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ensure tables exist on startup
+    configure_logging("b2-api")
     Base.metadata.create_all(bind=engine)
     yield
 
