@@ -1,0 +1,61 @@
+services:
+  # --- Shared Infrastructure (for local B2 development) ---
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: traffic
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # --- B2 Services ---
+  b2-stream-processor:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.processor
+    depends_on:
+      - kafka
+      - postgres
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_TOPIC_INPUT: traffic.events.raw
+      POSTGRES_URL: postgresql://user:pass@postgres:5432/traffic
+    restart: on-failure
+
+  b2-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_URL: postgresql://user:pass@postgres:5432/traffic
+    restart: on-failure
+
+volumes:
+  pgdata:

@@ -1,0 +1,17 @@
+[project]
+name = "its-data-intelligence"
+version = "0.1.0"
+description = "B2 Data & Intelligence — stream processing and analytics API for the Intelligent Traffic System"
+requires-python = ">=3.11"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
