@@ -38,6 +38,7 @@ class TrafficMetricOutput(BaseModel):
     camera_id: str
     window_start: datetime
     window_end: datetime
+    lane_id: int | None = None
     vehicle_count: int
     counts_by_class: dict[str, int]
     avg_speed_kmh: float

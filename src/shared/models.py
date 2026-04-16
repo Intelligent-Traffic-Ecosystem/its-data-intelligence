@@ -19,8 +19,18 @@ class TrafficEvent(Base):
     centroid_x: Mapped[float | None] = mapped_column(Float)
     centroid_y: Mapped[float | None] = mapped_column(Float)
     speed_kmh: Mapped[float | None] = mapped_column(Float)
+    frame_id: Mapped[int | None] = mapped_column(BigInteger)
+    confidence: Mapped[float | None] = mapped_column(Float)
+    bbox_x: Mapped[int | None] = mapped_column(Integer)
+    bbox_y: Mapped[int | None] = mapped_column(Integer)
+    bbox_w: Mapped[int | None] = mapped_column(Integer)
+    bbox_h: Mapped[int | None] = mapped_column(Integer)
+    lane_id: Mapped[int | None] = mapped_column(Integer)
 
-    __table_args__ = (Index("ix_traffic_events_camera_ts", "camera_id", ts.desc()),)
+    __table_args__ = (
+        Index("ix_traffic_events_camera_ts", "camera_id", ts.desc()),
+        Index("ix_traffic_events_camera_lane_ts", "camera_id", "lane_id", ts.desc()),
+    )
 
 
 class TrafficMetric(Base):
@@ -30,6 +40,7 @@ class TrafficMetric(Base):
     camera_id: Mapped[str] = mapped_column(Text, nullable=False)
     window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     window_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    lane_id: Mapped[int | None] = mapped_column(Integer)
     vehicle_count: Mapped[int | None] = mapped_column(Integer)
     counts_by_class: Mapped[str | None] = mapped_column(Text)  # JSON string
     avg_speed_kmh: Mapped[float | None] = mapped_column(Float)
@@ -39,6 +50,8 @@ class TrafficMetric(Base):
     congestion_score: Mapped[float | None] = mapped_column(Float)
 
     __table_args__ = (
-        UniqueConstraint("camera_id", "window_start"),
+        UniqueConstraint(
+            "camera_id", "lane_id", "window_start", name="uq_metrics_camera_lane_window"
+        ),
         Index("ix_traffic_metrics_camera_window", "camera_id", window_start.desc()),
     )
