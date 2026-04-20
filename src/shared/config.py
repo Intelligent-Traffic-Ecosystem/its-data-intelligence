@@ -31,6 +31,22 @@ class Settings(BaseSettings):
     api_port: int = 8000
     ws_broadcast_interval: int = 5
 
+    # Speed fallback (centroid-based)
+    speed_tracker_ttl_seconds: int = 30
+    speed_tracker_pixel_to_meter: float = 0.05
+
+    # Raw event batched writer
+    raw_writer_batch_size: int = 200
+    raw_writer_flush_interval_seconds: float = 1.0
+
+    # Retention sweep
+    retention_events_hours: int = 24
+    retention_metrics_days: int = 30
+    retention_sweep_interval_seconds: int = 3600
+
+    # Processor Prometheus port
+    processor_metrics_port: int = 9100
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 
