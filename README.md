@@ -31,18 +31,25 @@ curl http://localhost:8000/congestion/current
 ## Development
 
 ```bash
-# Install dependencies
-pip install -r requirements/base.txt -r requirements/api.txt
-pip install kafka-python pytest ruff
+# Install dependencies (full dev stack incl. testcontainers)
+pip install -r requirements.txt
 
-# Run tests
+# Run unit tests (skips integration)
 make test
+
+# Run integration tests (requires Docker — spins up Kafka + Postgres)
+make test-integration
+
+# Run everything
+make test-all
 
 # Lint
 make lint
 
 # Run mock producer
-make mock
+make mock                                      # plain B1-shaped events
+python tools/mock_producer.py --with-lanes     # include lane_id ~80% of events
+python tools/mock_producer.py --no-speed       # exercise B2 speed fallback
 
 # View logs
 make logs
@@ -50,6 +57,12 @@ make logs
 # Tear down
 make down
 ```
+
+## Retention
+
+Per SRS §7, the processor sweeps old rows on a configurable interval
+(default 1 hour): `traffic_events` are kept for 24h, `traffic_metrics` for
+30 days. Override via `RETENTION_EVENTS_HOURS` / `RETENTION_METRICS_DAYS`.
 
 ## API Endpoints
 
@@ -59,9 +72,13 @@ make down
 | GET | `/metrics/current?camera_id=X` | Latest metrics for a camera |
 | GET | `/metrics/history?camera_id=X&from=T1&to=T2` | Historical metrics |
 | GET | `/congestion/current` | Current congestion for all cameras |
-| GET | `/health` | Liveness probe |
-| GET | `/metrics` | Prometheus scrape endpoint |
-| WS | `/ws/metrics` | Live metric updates (every 5s) |
+| GET | `/health` | Liveness probe (checks Kafka + Postgres) |
+| GET | `/metrics` | Prometheus scrape endpoint (b2-api on :8000) |
+| WS | `/ws/metrics[?camera_id=X]` | Live metric updates (every 5s); optional camera filter |
+
+The processor exposes its own Prometheus endpoint on port `9100`:
+`b2_events_processed_total`, `b2_events_dropped_total{reason}`,
+`b2_window_flushes_total`, `b2_kafka_consumer_lag`.
 
 ## Configuration
 
