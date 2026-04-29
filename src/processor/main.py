@@ -9,16 +9,14 @@ Run: python -m processor.main
 import logging
 import time
 
+from shared.logging_setup import configure_logging
 from shared.models import Base
 from shared.db import engine
 from processor.consumer import create_kafka_consumer
 from processor.validator import validate_event
 from processor.aggregator import WindowAggregator
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='{"time":"%(asctime)s","level":"%(levelname)s","logger":"%(name)s","msg":"%(message)s"}',
-)
+configure_logging("b2-processor")
 logger = logging.getLogger("processor")
 
 
