@@ -20,23 +20,24 @@ VEHICLE_CLASSES = ["car", "car", "car", "car", "truck", "bus", "motorcycle", "bi
 CAMERA_IDS = ["cam_{:02d}".format(i) for i in range(1, 21)]
 
 
-def generate_event(camera_id: str, vehicle_counter: int) -> dict:
-    """Generate a single realistic traffic event."""
+def generate_event(
+    camera_id: str,
+    vehicle_counter: int,
+    with_lane: bool = False,
+    include_speed: bool = True,
+) -> dict:
+    """Generate a single realistic traffic event matching the B1 schema."""
     vehicle_class = random.choice(VEHICLE_CLASSES)
 
-    # Simulate varying traffic conditions
-    hour = datetime.now().second % 60  # Use seconds to simulate time-of-day patterns
+    hour = datetime.now().second % 60
     if hour < 20:
-        # Rush hour — slow, many vehicles
         speed = random.uniform(0, 25)
     elif hour < 40:
-        # Normal — moderate speed
         speed = random.uniform(15, 55)
     else:
-        # Light traffic — fast
         speed = random.uniform(30, 65)
 
-    return {
+    event: dict = {
         "camera_id": camera_id,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "frame_id": vehicle_counter,
@@ -53,8 +54,12 @@ def generate_event(camera_id: str, vehicle_counter: int) -> dict:
             "x": random.randint(100, 1820),
             "y": random.randint(100, 980),
         },
-        "speed_estimate": round(speed, 1),
     }
+    if include_speed:
+        event["speed_estimate"] = round(speed, 1)
+    if with_lane and random.random() < 0.8:
+        event["lane_id"] = random.choice([1, 2, 3])
+    return event
 
 
 def generate_malformed_event() -> str:
@@ -75,6 +80,8 @@ def main():
     parser.add_argument("--brokers", type=str, default="localhost:9092", help="Kafka broker(s)")
     parser.add_argument("--topic", type=str, default="traffic.events.raw", help="Kafka topic")
     parser.add_argument("--malformed-rate", type=float, default=0.02, help="Fraction of malformed events (0-1)")
+    parser.add_argument("--with-lanes", action="store_true", help="Include lane_id on ~80%% of events")
+    parser.add_argument("--no-speed", action="store_true", help="Omit speed_estimate so B2 must compute it")
     args = parser.parse_args()
 
     cameras = CAMERA_IDS[: args.cameras]
@@ -105,7 +112,12 @@ def main():
                 producer.send(args.topic, value=value, key=camera.encode("utf-8"))
                 print(f"  [MALFORMED] sent to {camera}")
             else:
-                event = generate_event(camera, counter)
+                event = generate_event(
+                    camera,
+                    counter,
+                    with_lane=args.with_lanes,
+                    include_speed=not args.no_speed,
+                )
                 producer.send(
                     args.topic,
                     value=json.dumps(event).encode("utf-8"),
@@ -115,7 +127,8 @@ def main():
                 if counter % 50 == 0:
                     print(
                         f"  Sent {counter} events | last: {camera} "
-                        f"class={event['class']} speed={event.get('speed_estimate', '?')} km/h"
+                        f"class={event['class']} speed={event.get('speed_estimate', '?')} "
+                        f"lane={event.get('lane_id', '-')}"
                     )
 
             time.sleep(delay)
