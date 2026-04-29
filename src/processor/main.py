@@ -1,7 +1,8 @@
 """B2 Stream Processor — entry point.
 
 Consumes traffic events from Kafka, aggregates them in time windows,
-computes metrics, classifies congestion, and writes results to PostgreSQL.
+computes metrics, classifies congestion, persists raw events + metrics to
+PostgreSQL, and periodically prunes data per the SRS retention policy.
 
 Run: python -m processor.main
 """
@@ -9,52 +10,60 @@ Run: python -m processor.main
 import logging
 import time
 
+from prometheus_client import start_http_server
+
+from shared.config import settings
+from shared.db import SessionLocal, engine
 from shared.logging_setup import configure_logging
 from shared.models import Base
-from shared.db import engine
-from processor.consumer import create_kafka_consumer
-from processor.validator import validate_event
+
 from processor.aggregator import WindowAggregator
+from processor.consumer import create_kafka_consumer
+from processor.runner import run_iteration
+from processor.retention import sweep
+from processor.speed_tracker import SpeedTracker
+from processor.writer import BatchedRawWriter
 
 configure_logging("b2-processor")
 logger = logging.getLogger("processor")
 
 
 def main() -> None:
-    logger.info("Starting B2 stream processor...")
+    logger.info("processor_starting")
 
-    # Ensure tables exist
     Base.metadata.create_all(bind=engine)
-    logger.info("Database tables verified")
+    logger.info("db_tables_verified")
+
+    start_http_server(settings.processor_metrics_port)
+    logger.info("prometheus_started port=%d", settings.processor_metrics_port)
 
     consumer = create_kafka_consumer()
     aggregator = WindowAggregator()
+    raw_writer = BatchedRawWriter()
+    tracker = SpeedTracker()
 
-    logger.info("Processing events — press Ctrl+C to stop")
+    last_sweep_ts = 0.0
+
+    logger.info("processor_ready")
 
     try:
         while True:
-            # Poll Kafka (timeout 1 second)
-            records = consumer.poll(timeout_ms=1000)
+            run_iteration(consumer, aggregator, raw_writer, tracker)
 
-            for topic_partition, messages in records.items():
-                for message in messages:
-                    event = validate_event(message.value)
-                    if event:
-                        aggregator.add_event(event)
-
-            # Flush any expired windows
-            aggregator.flush_expired()
-
-            # Small sleep to avoid busy-spinning when no messages
-            if not records:
-                time.sleep(0.1)
+            now = time.time()
+            if now - last_sweep_ts >= settings.retention_sweep_interval_seconds:
+                sweep(SessionLocal)
+                last_sweep_ts = now
 
     except KeyboardInterrupt:
-        logger.info("Shutting down...")
+        logger.info("processor_shutting_down")
     finally:
+        try:
+            raw_writer.flush()
+        except Exception:
+            logger.exception("final_raw_flush_failed")
         consumer.close()
-        logger.info("Consumer closed")
+        logger.info("consumer_closed")
 
 
 if __name__ == "__main__":
