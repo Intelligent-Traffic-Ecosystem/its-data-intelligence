@@ -1,2 +1,3 @@
 -r base.txt
 kafka-python>=2.0,<3
+prometheus-client>=0.20,<1
