@@ -100,10 +100,10 @@ def _event_to_row(event: TrafficEventInput) -> dict:
         "speed_kmh": event.speed_estimate,
         "frame_id": event.frame_id,
         "confidence": event.confidence,
-        "bbox_x": event.bbox.x,
-        "bbox_y": event.bbox.y,
-        "bbox_w": event.bbox.w,
-        "bbox_h": event.bbox.h,
+        "bbox_x": int(event.bbox.x),
+        "bbox_y": int(event.bbox.y),
+        "bbox_w": int(event.bbox.w),
+        "bbox_h": int(event.bbox.h),
         "lane_id": event.lane_id,
     }
 

@@ -49,3 +49,17 @@ def test_all_valid_classes():
     for cls in ["car", "bus", "truck", "motorcycle", "bicycle", "pedestrian"]:
         result = validate_event(_make_event(**{"class": cls}))
         assert result is not None, f"Class '{cls}' should be valid"
+
+
+def test_b1_float_bbox_centroid():
+    """B1 rounds pixel coords to 2 decimals; the wire contract must accept
+    fractional floats for bbox + centroid."""
+    result = validate_event(
+        _make_event(
+            bbox={"x": 412.34, "y": 178.56, "w": 82.78, "h": 46.12},
+            centroid={"x": 453.45, "y": 201.34},
+        )
+    )
+    assert result is not None
+    assert result.bbox.x == 412.34
+    assert result.centroid.y == 201.34

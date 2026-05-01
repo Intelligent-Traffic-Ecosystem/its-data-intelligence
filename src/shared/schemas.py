@@ -6,15 +6,16 @@ from pydantic import BaseModel, Field
 # --- Input event from B1 via Kafka ---
 
 class BBox(BaseModel):
-    x: int
-    y: int
-    w: int
-    h: int
+    # B1 rounds pixel coords to 2 decimals; accept floats and cast in the writer.
+    x: float
+    y: float
+    w: float
+    h: float
 
 
 class Centroid(BaseModel):
-    x: int
-    y: int
+    x: float
+    y: float
 
 
 class TrafficEventInput(BaseModel):
