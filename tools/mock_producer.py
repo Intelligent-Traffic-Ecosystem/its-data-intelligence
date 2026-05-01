@@ -118,11 +118,7 @@ def main():
                     with_lane=args.with_lanes,
                     include_speed=not args.no_speed,
                 )
-                producer.send(
-                    args.topic,
-                    value=json.dumps(event).encode("utf-8"),
-                    key=camera.encode("utf-8"),
-                )
+                producer.send(args.topic, value=event, key=camera.encode("utf-8"))
                 counter += 1
                 if counter % 50 == 0:
                     print(
