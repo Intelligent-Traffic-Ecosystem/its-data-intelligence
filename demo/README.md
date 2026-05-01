@@ -48,3 +48,52 @@ docker compose down -v          # -v also wipes the Postgres volume for a clean 
   docker compose exec postgres psql -U user -d traffic
   ```
 - Most demos take ~30 seconds of producer traffic to populate enough rows to look at.
+
+## Live data side terminal — keep this open the whole demo
+
+This is the single most visual thing we can show: **the dashboard-facing WebSocket pushing fresh metrics every 5 seconds, in real time.** Open it on a projected screen and leave it running for the whole session — every demo's traffic shows up here automatically.
+
+### Install the WebSocket client (one-time, choose one)
+
+```bash
+# Option A — websocat (Rust, single binary)
+brew install websocat
+
+# Option B — wscat (npm)
+npm install -g wscat
+```
+
+### All cameras (default — what B3's main dashboard subscribes to)
+
+```bash
+# websocat
+websocat ws://localhost:8000/ws/metrics | jq -c .
+
+# wscat
+wscat -c ws://localhost:8000/ws/metrics
+```
+
+You'll see one JSON array per camera, every 5 seconds, with `vehicle_count`, `avg_speed_kmh`, `congestion_level`, `congestion_score`, `counts_by_class`, etc.
+
+### Single camera (what B3's drill-down view subscribes to)
+
+```bash
+websocat 'ws://localhost:8000/ws/metrics?camera_id=cam_01' | jq -c .
+```
+
+Only `cam_01` arrives now — the SQL push-down means the server doesn't even fetch other cameras' rows.
+
+### What to point at while it scrolls
+
+- **Cadence:** "One push every 5 seconds — that's our window size."
+- **Schema:** "Same shape as `/metrics/current` — B3 can use one Pydantic model for both."
+- **Live updates during phase #2:** when @gimsara94 starts the producer with `--with-lanes`, `vehicle_count` and `congestion_level` change in real time.
+- **Live updates during phase #3:** when @birajithk runs `--no-speed`, `avg_speed_kmh` stays non-zero — proves the centroid fallback is working live.
+- **Live degradation during phase #4:** when @Bhagyatgn stops Kafka, the WebSocket keeps pushing the *last-known* metrics — so the dashboard doesn't go blank during a partial outage.
+
+### One-shot peek without keeping it open
+
+If you don't want to install a client, the same data is available via the REST endpoint:
+```bash
+watch -n 5 'curl -s localhost:8000/congestion/current | jq'
+```
