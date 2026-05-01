@@ -16,7 +16,13 @@ Two services:
 
 ```bash
 # Start everything (Kafka, Postgres, both B2 services)
+cp .env.example .env
 docker compose up -d
+
+# Forcing a clean rebuild (skips BuildKit layer cache)
+# `--build --force-recreate` still uses the layer cache — use this instead:
+docker compose build --no-cache --pull
+docker compose up -d --force-recreate
 
 # Send mock traffic events (for development without B1)
 pip install kafka-python
@@ -44,6 +50,8 @@ docker compose up -d
 docker compose ps                              # all services Healthy
 docker compose exec b2-stream-processor alembic upgrade head
 ```
+
+> Need a clean rebuild? `docker compose up -d --build --force-recreate` still hits the BuildKit layer cache. Run `docker compose build --no-cache --pull` first, then `docker compose up -d --force-recreate`.
 
 ### 2 — Health probe (Kafka + Postgres aware)
 ```bash
