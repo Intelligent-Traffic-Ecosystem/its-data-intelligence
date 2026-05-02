@@ -3,7 +3,6 @@ services:
   kafka:
     image: soldevelo/kafka
     ports:
-      - "9092:9092"     # PLAINTEXT — for clients on the docker network (b2-stream-processor, b2-api)
       - "29092:29092"   # EXTERNAL — for clients on the host (mock_producer venv, kafka-ui, debug tools)
     environment:
       # soldevelo/kafka is Bitnami-derived → requires KAFKA_CFG_* prefix
