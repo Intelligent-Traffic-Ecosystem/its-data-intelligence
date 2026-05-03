@@ -11,6 +11,7 @@ class Settings(BaseSettings):
 
     # Stream Processor
     window_size_seconds: int = 5
+    window_allowed_lateness_seconds: int = 1
 
     # Congestion weights
     congestion_weight_count: float = 0.4

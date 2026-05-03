@@ -65,7 +65,7 @@ def test_b1_event_flows_to_db(kafka_container, fresh_db):
 
     raw_writer.flush()
     time.sleep(2)
-    aggregator.flush_expired()
+    aggregator.flush_all()
     consumer.close()
 
     from sqlalchemy import select

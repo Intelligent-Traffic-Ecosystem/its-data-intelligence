@@ -58,6 +58,10 @@ def main() -> None:
         logger.info("processor_shutting_down")
     finally:
         try:
+            aggregator.flush_all()
+        except Exception:
+            logger.exception("final_window_flush_failed")
+        try:
             raw_writer.flush()
         except Exception:
             logger.exception("final_raw_flush_failed")

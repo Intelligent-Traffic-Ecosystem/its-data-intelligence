@@ -258,7 +258,7 @@ These are tracked on the project board so we don't lose them:
 - **Pixel-to-meter calibration is a placeholder** (`SPEED_TRACKER_PIXEL_TO_METER=0.05`). Absolute km/h numbers will be off until B1 hands over per-camera survey data. Tracked in [#19](https://github.com/Intelligent-Traffic-Ecosystem/its-data-intelligence/issues/19).
 - **In-memory windowing, not PyFlink.** Fine for the demo and the load we expect; PyFlink migration is on the backlog ([#20](https://github.com/Intelligent-Traffic-Ecosystem/its-data-intelligence/issues/20)) for after the demo.
 - **Auth is delegated to Kong / Keycloak (B4).** B2 endpoints are unauthenticated when hit directly — fine inside the cluster, defense-in-depth tracked in [#23](https://github.com/Intelligent-Traffic-Ecosystem/its-data-intelligence/issues/23).
-- **Wall-clock vs event-time flushing** ([#21](https://github.com/Intelligent-Traffic-Ecosystem/its-data-intelligence/issues/21)) — late events from a clock-skewed B1 camera could be lost; not blocking since cameras are NTP-synced (<100ms drift).
+- **Event-time window flushing now uses a per-camera watermark + allowed lateness** (tracked in [#21](https://github.com/Intelligent-Traffic-Ecosystem/its-data-intelligence/issues/21)). Keep `WINDOW_ALLOWED_LATENESS_SECONDS` tuned to your worst expected camera skew.
 
 ## Project Structure
 
