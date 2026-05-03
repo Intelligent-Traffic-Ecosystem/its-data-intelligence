@@ -11,10 +11,10 @@ import time
 from datetime import datetime, timezone
 
 from processor.aggregator import WindowAggregator
+from processor.metrics_prom import EVENTS_DROPPED, EVENTS_PROCESSED, WINDOWS_FLUSHED
+from processor.speed_tracker import SpeedTracker
 from processor.validator import validate_event
 from processor.writer import BatchedRawWriter
-from processor.speed_tracker import SpeedTracker
-from processor.metrics_prom import EVENTS_PROCESSED, EVENTS_DROPPED, WINDOWS_FLUSHED
 
 logger = logging.getLogger(__name__)
 

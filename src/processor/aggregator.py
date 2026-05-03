@@ -14,11 +14,11 @@ import time
 from collections import defaultdict
 from datetime import datetime, timezone
 
-from shared.schemas import TrafficEventInput
-from shared.config import settings
-from processor.metrics import compute_metrics
 from processor.congestion import classify_congestion
+from processor.metrics import compute_metrics
 from processor.writer import write_metrics
+from shared.config import settings
+from shared.schemas import TrafficEventInput
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,9 @@ class WindowAggregator:
             lambda: defaultdict(list)
         )
         # per-lane: {(camera_id, lane_id): {window_key: [events]}}
-        self._lane_windows: dict[
-            tuple[str, int], dict[int, list[TrafficEventInput]]
-        ] = defaultdict(lambda: defaultdict(list))
+        self._lane_windows: dict[tuple[str, int], dict[int, list[TrafficEventInput]]] = defaultdict(
+            lambda: defaultdict(list)
+        )
 
     def _window_key(self, ts: datetime) -> int:
         epoch = int(ts.timestamp())
@@ -57,15 +57,13 @@ class WindowAggregator:
                     if events:
                         results.append(self._process_window(camera_id, wk, events, None))
 
-        for (camera_id, lane_id) in list(self._lane_windows.keys()):
+        for camera_id, lane_id in list(self._lane_windows.keys()):
             buckets = self._lane_windows[(camera_id, lane_id)]
             for wk in list(buckets.keys()):
                 if wk + self.window_size <= current_window:
                     events = buckets.pop(wk)
                     if events:
-                        results.append(
-                            self._process_window(camera_id, wk, events, lane_id)
-                        )
+                        results.append(self._process_window(camera_id, wk, events, lane_id))
             if not buckets:
                 self._lane_windows.pop((camera_id, lane_id), None)
 
@@ -86,9 +84,7 @@ class WindowAggregator:
         lane_id: int | None,
     ) -> dict:
         window_start = datetime.fromtimestamp(window_start_epoch, tz=timezone.utc)
-        window_end = datetime.fromtimestamp(
-            window_start_epoch + self.window_size, tz=timezone.utc
-        )
+        window_end = datetime.fromtimestamp(window_start_epoch + self.window_size, tz=timezone.utc)
 
         m = compute_metrics(events)
         level, score = classify_congestion(

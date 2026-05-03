@@ -18,9 +18,9 @@ def test_mock_producer_events_are_valid(kafka_container):
     bootstrap = kafka_container.get_bootstrap_server()
 
     sys.path.insert(0, "tools")
+    from kafka import KafkaConsumer, KafkaProducer
     from mock_producer import generate_event  # noqa: E402
 
-    from kafka import KafkaConsumer, KafkaProducer
     from processor.validator import validate_event
 
     topic = "traffic.events.raw.compat"

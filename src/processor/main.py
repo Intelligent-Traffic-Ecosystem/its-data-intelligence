@@ -12,17 +12,16 @@ import time
 
 from prometheus_client import start_http_server
 
+from processor.aggregator import WindowAggregator
+from processor.consumer import create_kafka_consumer
+from processor.retention import sweep
+from processor.runner import run_iteration
+from processor.speed_tracker import SpeedTracker
+from processor.writer import BatchedRawWriter
 from shared.config import settings
 from shared.db import SessionLocal, engine
 from shared.logging_setup import configure_logging
 from shared.models import Base
-
-from processor.aggregator import WindowAggregator
-from processor.consumer import create_kafka_consumer
-from processor.runner import run_iteration
-from processor.retention import sweep
-from processor.speed_tracker import SpeedTracker
-from processor.writer import BatchedRawWriter
 
 configure_logging("b2-processor")
 logger = logging.getLogger("processor")

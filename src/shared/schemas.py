@@ -2,8 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-
 # --- Input event from B1 via Kafka ---
+
 
 class BBox(BaseModel):
     # B1 rounds pixel coords to 2 decimals; accept floats and cast in the writer.
@@ -34,6 +34,7 @@ class TrafficEventInput(BaseModel):
 
 
 # --- Output metric to B3 via REST / WebSocket ---
+
 
 class TrafficMetricOutput(BaseModel):
     camera_id: str

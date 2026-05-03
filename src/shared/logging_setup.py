@@ -35,6 +35,4 @@ def configure_logging(service_name: str, level: int = logging.INFO) -> None:
     logging.LoggerAdapter(root, {"service": service_name})
     root._b2_json_configured = True  # type: ignore[attr-defined]
 
-    logging.getLogger(service_name).info(
-        "logging_configured", extra={"service": service_name}
-    )
+    logging.getLogger(service_name).info("logging_configured", extra={"service": service_name})
