@@ -23,7 +23,9 @@ def validate_event(raw: str | bytes) -> TrafficEventInput | None:
         return None
 
     if event.vehicle_class not in VALID_CLASSES:
-        logger.warning("Unknown vehicle class '%s' from camera %s", event.vehicle_class, event.camera_id)
+        logger.warning(
+            "Unknown vehicle class '%s' from camera %s", event.vehicle_class, event.camera_id
+        )
         return None
 
     return event

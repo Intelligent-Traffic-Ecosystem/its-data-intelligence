@@ -60,12 +60,16 @@ def test_sweep_deletes_old_rows(fresh_db):
 
     session = SessionLocal()
     try:
-        remaining_events = session.execute(
-            select(TrafficEvent).where(TrafficEvent.camera_id == "cam_R")
-        ).scalars().all()
-        remaining_metrics = session.execute(
-            select(TrafficMetric).where(TrafficMetric.camera_id == "cam_R")
-        ).scalars().all()
+        remaining_events = (
+            session.execute(select(TrafficEvent).where(TrafficEvent.camera_id == "cam_R"))
+            .scalars()
+            .all()
+        )
+        remaining_metrics = (
+            session.execute(select(TrafficMetric).where(TrafficMetric.camera_id == "cam_R"))
+            .scalars()
+            .all()
+        )
         assert all(e.ts >= now - timedelta(hours=24) for e in remaining_events)
         assert all(m.window_start >= now - timedelta(days=30) for m in remaining_metrics)
     finally:

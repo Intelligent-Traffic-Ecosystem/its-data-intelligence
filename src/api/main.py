@@ -3,17 +3,19 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 
-from shared.db import engine
-from shared.logging_setup import configure_logging
-from shared.models import Base
-from api.routes import cameras, congestion, health, metrics
-from api.websocket import router as ws_router
 from api.prometheus import (
     PROCESSING_ERRORS,
     REQUEST_COUNT,
     REQUEST_LATENCY,
+)
+from api.prometheus import (
     router as prom_router,
 )
+from api.routes import cameras, congestion, health, metrics
+from api.websocket import router as ws_router
+from shared.db import engine
+from shared.logging_setup import configure_logging
+from shared.models import Base
 
 configure_logging("b2-api")
 
@@ -41,9 +43,7 @@ async def prometheus_middleware(request: Request, call_next):
         response = await call_next(request)
     except Exception:
         PROCESSING_ERRORS.labels(type="api_unhandled").inc()
-        REQUEST_COUNT.labels(
-            method=request.method, endpoint=endpoint, status="500"
-        ).inc()
+        REQUEST_COUNT.labels(method=request.method, endpoint=endpoint, status="500").inc()
         raise
     REQUEST_LATENCY.labels(endpoint=endpoint).observe(time.perf_counter() - start)
     REQUEST_COUNT.labels(

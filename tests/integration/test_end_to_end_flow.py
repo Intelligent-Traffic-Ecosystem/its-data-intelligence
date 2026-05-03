@@ -69,12 +69,17 @@ def test_b1_event_flows_to_db(kafka_container, fresh_db):
     consumer.close()
 
     from sqlalchemy import select
+
     from shared.db import SessionLocal
     from shared.models import TrafficEvent, TrafficMetric
 
     session = SessionLocal()
     try:
-        events = session.execute(select(TrafficEvent).where(TrafficEvent.camera_id == "cam_e2e")).scalars().all()
+        events = (
+            session.execute(select(TrafficEvent).where(TrafficEvent.camera_id == "cam_e2e"))
+            .scalars()
+            .all()
+        )
         assert len(events) == 1, "raw event should have been persisted"
         row = events[0]
         assert row.frame_id == 42
@@ -84,9 +89,9 @@ def test_b1_event_flows_to_db(kafka_container, fresh_db):
         assert row.vehicle_class == "car"
 
         metrics = (
-            session.execute(
-                select(TrafficMetric).where(TrafficMetric.camera_id == "cam_e2e")
-            ).scalars().all()
+            session.execute(select(TrafficMetric).where(TrafficMetric.camera_id == "cam_e2e"))
+            .scalars()
+            .all()
         )
         assert len(metrics) >= 1, "at least one metric row should exist"
         levels = {(m.lane_id, m.vehicle_count) for m in metrics}

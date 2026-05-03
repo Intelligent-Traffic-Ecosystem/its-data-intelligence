@@ -5,11 +5,11 @@ from typing import Iterable
 
 from sqlalchemy import insert as sa_insert
 
+from processor.metrics_prom import METRICS_BATCH_WRITE_SECONDS, RAW_BATCH_WRITE_SECONDS
 from shared.config import settings
 from shared.db import SessionLocal, engine
 from shared.models import TrafficEvent, TrafficMetric
 from shared.schemas import TrafficEventInput
-from processor.metrics_prom import METRICS_BATCH_WRITE_SECONDS, RAW_BATCH_WRITE_SECONDS
 
 logger = logging.getLogger(__name__)
 
