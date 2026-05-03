@@ -47,7 +47,7 @@ A step-by-step walkthrough that exercises every capability the team built. Run f
 ```bash
 cp .env.example .env
 docker compose up -d
-docker compose ps                              # all services Healthy
+docker compose ps                            
 docker compose exec b2-stream-processor alembic upgrade head
 ```
 
