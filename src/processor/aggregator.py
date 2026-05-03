@@ -18,7 +18,7 @@ from shared.schemas import TrafficEventInput
 from shared.config import settings
 from processor.metrics import compute_metrics
 from processor.congestion import classify_congestion
-from processor.writer import write_metric
+from processor.writer import write_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +69,13 @@ class WindowAggregator:
             if not buckets:
                 self._lane_windows.pop((camera_id, lane_id), None)
 
+        for camera_id in list(self._windows.keys()):
+            if not self._windows[camera_id]:
+                self._windows.pop(camera_id, None)
+
+        if results:
+            write_metrics(results)
+
         return results
 
     def _process_window(
@@ -98,9 +105,7 @@ class WindowAggregator:
             "congestion_score": score,
         }
 
-        write_metric(result)
-
-        logger.info(
+        logger.debug(
             "window_flushed camera=%s lane=%s start=%s vehicles=%d speed=%.1f congestion=%s score=%.2f",
             camera_id,
             lane_id,

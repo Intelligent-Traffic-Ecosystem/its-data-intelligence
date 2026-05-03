@@ -18,6 +18,8 @@ from kafka import KafkaProducer
 
 VEHICLE_CLASSES = ["car", "car", "car", "car", "truck", "bus", "motorcycle", "bicycle"]
 CAMERA_IDS = ["cam_{:02d}".format(i) for i in range(1, 21)]
+KAFKA_CONNECT_RETRIES = 10
+KAFKA_CONNECT_DELAY_SECONDS = 2
 
 
 def generate_event(
@@ -88,15 +90,26 @@ def main():
     delay = 1.0 / args.rate
 
     print(f"Connecting to Kafka at {args.brokers}...")
-    try:
-        producer = KafkaProducer(
-            bootstrap_servers=args.brokers.split(","),
-            value_serializer=lambda v: v.encode("utf-8") if isinstance(v, str) else json.dumps(v).encode("utf-8"),
-        )
-    except Exception as e:
-        print(f"Failed to connect to Kafka: {e}")
-        print("Make sure Kafka is running: docker compose up kafka zookeeper")
-        sys.exit(1)
+    producer = None
+    last_error = None
+    for attempt in range(1, KAFKA_CONNECT_RETRIES + 1):
+        try:
+            producer = KafkaProducer(
+                bootstrap_servers=args.brokers.split(","),
+                value_serializer=lambda v: v.encode("utf-8") if isinstance(v, str) else json.dumps(v).encode("utf-8"),
+            )
+            break
+        except Exception as e:
+            last_error = e
+            if attempt < KAFKA_CONNECT_RETRIES:
+                print(
+                    f"Kafka not ready yet ({attempt}/{KAFKA_CONNECT_RETRIES}): {e}"
+                )
+                time.sleep(KAFKA_CONNECT_DELAY_SECONDS)
+            else:
+                print(f"Failed to connect to Kafka: {e}")
+                print("Make sure Kafka is running: docker compose up -d")
+                sys.exit(1)
 
     print(f"Producing events to topic '{args.topic}' from {len(cameras)} cameras at {args.rate} events/sec")
     print("Press Ctrl+C to stop\n")

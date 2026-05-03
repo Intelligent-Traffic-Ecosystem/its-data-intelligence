@@ -9,6 +9,7 @@ from shared.config import settings
 from shared.db import SessionLocal, engine
 from shared.models import TrafficEvent, TrafficMetric
 from shared.schemas import TrafficEventInput
+from processor.metrics_prom import METRICS_BATCH_WRITE_SECONDS, RAW_BATCH_WRITE_SECONDS
 
 logger = logging.getLogger(__name__)
 
@@ -17,14 +18,8 @@ def _is_postgres() -> bool:
     return engine.dialect.name == "postgresql"
 
 
-def write_metric(metric: dict) -> None:
-    """Insert or update an aggregated metric row.
-
-    Camera-wide rows have lane_id=None; per-lane rows carry the lane_id. The
-    unique index covers (camera_id, COALESCE(lane_id, -1), window_start) so a
-    camera-wide row and per-lane rows for the same window coexist.
-    """
-    row = {
+def _metric_to_row(metric: dict) -> dict:
+    return {
         "camera_id": metric["camera_id"],
         "window_start": metric["window_start"],
         "window_end": metric["window_end"],
@@ -38,12 +33,23 @@ def write_metric(metric: dict) -> None:
         "congestion_score": metric["congestion_score"],
     }
 
+
+def write_metrics(metrics: list[dict]) -> int:
+    """Batch upsert metric rows in a single transaction (one commit).
+
+    Camera-wide rows have lane_id=None; per-lane rows carry lane_id. Reduces
+    connection churn and commit overhead versus one transaction per window.
+    """
+    if not metrics:
+        return 0
+    rows = [_metric_to_row(m) for m in metrics]
+    start = time.perf_counter()
     session = SessionLocal()
     try:
         if _is_postgres():
             from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-            stmt = pg_insert(TrafficMetric).values(**row)
+            stmt = pg_insert(TrafficMetric).values(rows)
             stmt = stmt.on_conflict_do_update(
                 index_elements=["camera_id", "lane_id", "window_start"],
                 set_={
@@ -59,34 +65,41 @@ def write_metric(metric: dict) -> None:
             )
             session.execute(stmt)
         else:
-            existing = (
-                session.query(TrafficMetric)
-                .filter_by(
-                    camera_id=row["camera_id"],
-                    lane_id=row["lane_id"],
-                    window_start=row["window_start"],
+            for row in rows:
+                existing = (
+                    session.query(TrafficMetric)
+                    .filter_by(
+                        camera_id=row["camera_id"],
+                        lane_id=row["lane_id"],
+                        window_start=row["window_start"],
+                    )
+                    .one_or_none()
                 )
-                .one_or_none()
-            )
-            if existing is None:
-                session.execute(sa_insert(TrafficMetric).values(**row))
-            else:
-                for k, v in row.items():
-                    setattr(existing, k, v)
+                if existing is None:
+                    session.execute(sa_insert(TrafficMetric).values(**row))
+                else:
+                    for k, v in row.items():
+                        setattr(existing, k, v)
 
         session.commit()
-        logger.info(
-            "metric_written camera=%s lane=%s window=%s congestion=%s",
-            metric["camera_id"],
-            metric.get("lane_id"),
-            metric["window_start"],
-            metric["congestion_level"],
+        logger.debug(
+            "metrics_batch_written count=%d cameras=%s",
+            len(rows),
+            sorted({m["camera_id"] for m in metrics}),
         )
+        return len(rows)
     except Exception:
         session.rollback()
-        logger.exception("Failed to write metric for camera %s", metric["camera_id"])
+        logger.exception("metrics_batch_write_failed count=%d", len(rows))
+        return 0
     finally:
         session.close()
+        METRICS_BATCH_WRITE_SECONDS.observe(time.perf_counter() - start)
+
+
+def write_metric(metric: dict) -> None:
+    """Insert or update a single aggregated metric row (delegates to batch)."""
+    write_metrics([metric])
 
 
 def _event_to_row(event: TrafficEventInput) -> dict:
@@ -118,6 +131,7 @@ def write_raw_events(events: Iterable[TrafficEventInput]) -> int:
     if not rows:
         return 0
 
+    start = time.perf_counter()
     session = SessionLocal()
     try:
         session.execute(sa_insert(TrafficEvent), rows)
@@ -129,6 +143,7 @@ def write_raw_events(events: Iterable[TrafficEventInput]) -> int:
         return 0
     finally:
         session.close()
+        RAW_BATCH_WRITE_SECONDS.observe(time.perf_counter() - start)
 
 
 class BatchedRawWriter:
