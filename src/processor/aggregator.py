@@ -10,7 +10,6 @@ TumblingEventTimeWindows; the metric and congestion code stays the same.
 """
 
 import logging
-import time
 from collections import defaultdict
 from datetime import datetime, timezone
 
@@ -24,8 +23,13 @@ logger = logging.getLogger(__name__)
 
 
 class WindowAggregator:
-    def __init__(self, window_size: int | None = None):
+    def __init__(self, window_size: int | None = None, allowed_lateness_seconds: int | None = None):
         self.window_size = window_size or settings.window_size_seconds
+        self.allowed_lateness_seconds = (
+            allowed_lateness_seconds
+            if allowed_lateness_seconds is not None
+            else settings.window_allowed_lateness_seconds
+        )
         # camera-wide: {camera_id: {window_key: [events]}}
         self._windows: dict[str, dict[int, list[TrafficEventInput]]] = defaultdict(
             lambda: defaultdict(list)
@@ -34,6 +38,8 @@ class WindowAggregator:
         self._lane_windows: dict[tuple[str, int], dict[int, list[TrafficEventInput]]] = defaultdict(
             lambda: defaultdict(list)
         )
+        # per-camera max event-time seen (epoch seconds), for watermarking.
+        self._max_event_epoch_by_camera: dict[str, int] = {}
 
     def _window_key(self, ts: datetime) -> int:
         epoch = int(ts.timestamp())
@@ -41,26 +47,37 @@ class WindowAggregator:
 
     def add_event(self, event: TrafficEventInput) -> None:
         wk = self._window_key(event.timestamp)
+        event_epoch = int(event.timestamp.timestamp())
+        prev = self._max_event_epoch_by_camera.get(event.camera_id)
+        if prev is None or event_epoch > prev:
+            self._max_event_epoch_by_camera[event.camera_id] = event_epoch
+
         self._windows[event.camera_id][wk].append(event)
         if event.lane_id is not None:
             self._lane_windows[(event.camera_id, event.lane_id)][wk].append(event)
 
     def flush_expired(self) -> list[dict]:
-        now = int(time.time())
-        current_window = now - (now % self.window_size)
         results: list[dict] = []
 
         for camera_id in list(self._windows.keys()):
+            watermark = self._max_event_epoch_by_camera.get(camera_id)
+            if watermark is None:
+                continue
+            watermark -= self.allowed_lateness_seconds
             for wk in list(self._windows[camera_id].keys()):
-                if wk + self.window_size <= current_window:
+                if wk + self.window_size <= watermark:
                     events = self._windows[camera_id].pop(wk)
                     if events:
                         results.append(self._process_window(camera_id, wk, events, None))
 
         for camera_id, lane_id in list(self._lane_windows.keys()):
+            watermark = self._max_event_epoch_by_camera.get(camera_id)
+            if watermark is None:
+                continue
+            watermark -= self.allowed_lateness_seconds
             buckets = self._lane_windows[(camera_id, lane_id)]
             for wk in list(buckets.keys()):
-                if wk + self.window_size <= current_window:
+                if wk + self.window_size <= watermark:
                     events = buckets.pop(wk)
                     if events:
                         results.append(self._process_window(camera_id, wk, events, lane_id))
@@ -70,6 +87,32 @@ class WindowAggregator:
         for camera_id in list(self._windows.keys()):
             if not self._windows[camera_id]:
                 self._windows.pop(camera_id, None)
+
+        if results:
+            write_metrics(results)
+
+        return results
+
+    def flush_all(self) -> list[dict]:
+        """Flush all open windows (used for graceful shutdown/tests)."""
+        results: list[dict] = []
+
+        for camera_id in list(self._windows.keys()):
+            for wk in sorted(self._windows[camera_id].keys()):
+                events = self._windows[camera_id].pop(wk)
+                if events:
+                    results.append(self._process_window(camera_id, wk, events, None))
+
+        for camera_id, lane_id in list(self._lane_windows.keys()):
+            buckets = self._lane_windows[(camera_id, lane_id)]
+            for wk in sorted(buckets.keys()):
+                events = buckets.pop(wk)
+                if events:
+                    results.append(self._process_window(camera_id, wk, events, lane_id))
+            self._lane_windows.pop((camera_id, lane_id), None)
+
+        self._windows.clear()
+        self._max_event_epoch_by_camera.clear()
 
         if results:
             write_metrics(results)
