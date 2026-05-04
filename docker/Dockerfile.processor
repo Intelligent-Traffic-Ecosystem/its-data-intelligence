@@ -4,8 +4,12 @@ WORKDIR /app
 
 # Install system deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc libpq-dev && \
+    gcc libpq-dev default-jre-headless wget && \
     rm -rf /var/lib/apt/lists/*
+
+# Download Flink Kafka Connector JAR
+RUN mkdir -p /opt/flink/lib && \
+    wget -q https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/3.3.0-1.20/flink-sql-connector-kafka-3.3.0-1.20.jar -O /opt/flink/lib/flink-sql-connector-kafka.jar
 
 # Install Python deps
 COPY requirements/base.txt requirements/base.txt
