@@ -8,9 +8,9 @@ Run: python -m processor.main
 """
 
 import logging
+import os
 import threading
 import time
-import os
 
 from prometheus_client import start_http_server
 from pyflink.datastream import StreamExecutionEnvironment
@@ -53,7 +53,7 @@ def main() -> None:
     env = StreamExecutionEnvironment.get_execution_environment()
     env.set_parallelism(settings.flink_parallelism)
     env.enable_checkpointing(settings.flink_checkpoint_interval_ms, CheckpointingMode.EXACTLY_ONCE)
-    
+
     jar_path = "/opt/flink/lib/flink-sql-connector-kafka.jar"
     if os.path.exists(jar_path):
         env.add_jars(f"file://{jar_path}")

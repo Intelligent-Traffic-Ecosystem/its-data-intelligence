@@ -10,14 +10,15 @@ import json
 import os
 import time
 from datetime import datetime, timezone
+
 import pytest
+from pyflink.datastream import StreamExecutionEnvironment
 from sqlalchemy import select
 
 from processor.flink_job import build_pipeline
 from shared.config import settings
 from shared.db import SessionLocal
 from shared.models import TrafficEvent, TrafficMetric
-from pyflink.datastream import StreamExecutionEnvironment
 
 
 def _produce(producer, topic: str, event: dict) -> None:

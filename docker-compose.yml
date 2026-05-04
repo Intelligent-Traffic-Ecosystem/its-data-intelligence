@@ -32,17 +32,42 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   # --- B2 Services ---
-  b2-stream-processor:
+  jobmanager:
     build:
       context: .
       dockerfile: docker/Dockerfile.processor
+    command: standalone-job --python /app/processor/main.py
+    ports:
+      - "8081:8081"
     depends_on:
       - kafka
       - postgres
     environment:
-      KAFKA_BROKERS: kafka:9092
-      KAFKA_TOPIC_INPUT: traffic.events.raw
-      POSTGRES_URL: postgresql://user:pass@postgres:5432/traffic
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_TOPIC_INPUT=traffic.events.raw
+      - POSTGRES_URL=postgresql://user:pass@postgres:5432/traffic
+    restart: on-failure
+
+  taskmanager:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.processor
+    command: taskmanager
+    depends_on:
+      - jobmanager
+      - kafka
+      - postgres
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_TOPIC_INPUT=traffic.events.raw
+      - POSTGRES_URL=postgresql://user:pass@postgres:5432/traffic
     restart: on-failure
 
   b2-api:

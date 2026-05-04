@@ -2,15 +2,15 @@ import logging
 from datetime import datetime, timezone
 from typing import Iterable
 
-from pyflink.common import WatermarkStrategy, Duration, Types
-from pyflink.common.watermark_strategy import TimestampAssigner
+from pyflink.common import Duration
 from pyflink.common.serialization import SimpleStringSchema
+from pyflink.common.watermark_strategy import TimestampAssigner, WatermarkStrategy
 from pyflink.datastream import StreamExecutionEnvironment
 from pyflink.datastream.connectors.kafka import FlinkKafkaConsumer
-from pyflink.datastream.functions import FlatMapFunction, ProcessWindowFunction, MapFunction
-from pyflink.datastream.window import TumblingEventTimeWindows, Time
+from pyflink.datastream.functions import FlatMapFunction, MapFunction, ProcessWindowFunction
+from pyflink.datastream.window import Time, TumblingEventTimeWindows
 
-from processor.metrics_prom import EVENTS_PROCESSED, EVENTS_DROPPED, WINDOWS_FLUSHED
+from processor.metrics_prom import EVENTS_DROPPED, EVENTS_PROCESSED, WINDOWS_FLUSHED
 from processor.speed_tracker import SpeedTracker
 from processor.validator import validate_event
 from processor.writer import BatchedRawWriter, write_metrics
@@ -42,7 +42,7 @@ class ValidateAndTrackSpeed(FlatMapFunction):
 
         self.tracker.evict_stale()
         EVENTS_PROCESSED.inc()
-        
+
         # PyFlink implicitly pickles Python objects when output_type is not specified.
         # However, to be safe with watermarks and keys, we emit a dict.
         yield event.model_dump()
@@ -59,9 +59,11 @@ class EventTimestampAssigner(TimestampAssigner):
 
 
 class AggregateMetricsFunction(ProcessWindowFunction):
-    def process(self, key, context: ProcessWindowFunction.Context, elements: Iterable[dict]) -> Iterable[dict]:
-        from processor.metrics import compute_metrics
+    def process(
+        self, key, context: ProcessWindowFunction.Context, elements: Iterable[dict]
+    ) -> Iterable[dict]:
         from processor.congestion import classify_congestion
+        from processor.metrics import compute_metrics
 
         events = [TrafficEventInput.model_validate(e) for e in elements]
         if not events:
@@ -94,8 +96,10 @@ class AggregateMetricsFunction(ProcessWindowFunction):
         for lane_id in lanes:
             lane_events = [e for e in events if e.lane_id == lane_id]
             lm = compute_metrics(lane_events)
-            ll, ls = classify_congestion(lm["vehicle_count"], lm["avg_speed_kmh"], lm["stopped_ratio"])
-            
+            ll, ls = classify_congestion(
+                lm["vehicle_count"], lm["avg_speed_kmh"], lm["stopped_ratio"]
+            )
+
             yield {
                 "camera_id": camera_id,
                 "lane_id": lane_id,
@@ -144,7 +148,7 @@ def build_pipeline(env: StreamExecutionEnvironment):
         deserialization_schema=SimpleStringSchema(),
         properties=kafka_props
     )
-    
+
     # 1. Source
     stream = env.add_source(kafka_consumer).name("kafka_source")
 

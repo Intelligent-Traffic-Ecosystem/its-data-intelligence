@@ -1,20 +1,25 @@
-FROM python:3.11-slim
+FROM flink:1.20
+
+USER root
+
+# Install Python 3.11 and system dependencies
+RUN sed -i 's/archive.ubuntu.com/mirror.math.princeton.edu\/pub\/ubuntu/g' /etc/apt/sources.list || true && \
+    sed -i 's/security.ubuntu.com/mirror.math.princeton.edu\/pub\/ubuntu/g' /etc/apt/sources.list || true && \
+    apt-get update -y || true && \
+    apt-get install -y --no-install-recommends \
+    python3 python3-pip python3-dev build-essential libpq-dev wget && \
+    rm -rf /var/lib/apt/lists/* && \
+    ln -s /usr/bin/python3 /usr/bin/python
+
+# Download Flink Kafka Connector JAR into Flink's lib directory
+RUN wget -q https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/3.3.0-1.20/flink-sql-connector-kafka-3.3.0-1.20.jar -O /opt/flink/lib/flink-sql-connector-kafka.jar
 
 WORKDIR /app
-
-# Install system deps
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc libpq-dev default-jre-headless wget && \
-    rm -rf /var/lib/apt/lists/*
-
-# Download Flink Kafka Connector JAR
-RUN mkdir -p /opt/flink/lib && \
-    wget -q https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/3.3.0-1.20/flink-sql-connector-kafka-3.3.0-1.20.jar -O /opt/flink/lib/flink-sql-connector-kafka.jar
 
 # Install Python deps
 COPY requirements/base.txt requirements/base.txt
 COPY requirements/processor.txt requirements/processor.txt
-RUN pip install --no-cache-dir -r requirements/processor.txt
+RUN pip3 install --no-cache-dir -r requirements/processor.txt
 
 # Copy source code
 COPY src/shared/ /app/shared/
@@ -23,4 +28,5 @@ COPY src/processor/ /app/processor/
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-CMD ["python", "-m", "processor.main"]
+# Switch back to the standard Flink user
+USER flink

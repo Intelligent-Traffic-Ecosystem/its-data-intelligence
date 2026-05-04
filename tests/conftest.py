@@ -1,17 +1,15 @@
 import os
 import sys
 
+# Add src/ to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-# Add src/ to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-
-from shared.models import Base  # noqa: E402 – must come after sys.path insert
-
-
+from shared.models import Base
 # ---------------------------------------------------------------------------
 # In-memory SQLite engine – used for all unit tests that touch the DB
 # ---------------------------------------------------------------------------
