@@ -5,17 +5,17 @@ Stream processing and analytics API for the Intelligent Traffic System.
 ## Architecture
 
 ```
-B1 → Kafka → Apache Flink (JobManager & TaskManager) → PostgreSQL → FastAPI API → B3
+B1 → Kafka → Stream Processor → PostgreSQL → FastAPI API → B3
 ```
 
-Three services:
-- **jobmanager** & **taskmanager** — A scalable PyFlink cluster that consumes events from Kafka, aggregates in 5-second tumbling event-time windows with exactly-once semantics, computes metrics, classifies congestion, and writes to Postgres
+Two services:
+- **b2-stream-processor** — Consumes events from Kafka, aggregates in 5-second windows, computes metrics, classifies congestion, writes to Postgres
 - **b2-api** — REST + WebSocket API serving traffic metrics to B3 dashboard
 
 ## Quick Start
 
 ```bash
-# Start everything (Kafka, Postgres, Flink cluster, API)
+# Start everything (Kafka, Postgres, both B2 services)
 cp .env.example .env
 docker compose up -d
 
