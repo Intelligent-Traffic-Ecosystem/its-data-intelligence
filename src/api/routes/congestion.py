@@ -23,7 +23,7 @@ def get_current_congestion(db: Session = Depends(get_db)):
         .group_by(TrafficMetric.camera_id)
         .subquery()
     )
-
+    
     stmt = select(TrafficMetric).join(
         latest,
         (TrafficMetric.camera_id == latest.c.camera_id)
@@ -47,3 +47,4 @@ def get_current_congestion(db: Session = Depends(get_db)):
         )
         for row in rows
     ]
+# This endpoint returns the latest congestion metrics for each camera, which can be used to display current traffic conditions on a dashboard or map.

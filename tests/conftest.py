@@ -1,6 +1,10 @@
 import os
 import sys
 
+# MUST set env vars BEFORE importing any modules from src/
+# Use 127.0.0.1 instead of localhost to avoid DNS resolution issues on Windows
+os.environ["POSTGRES_URL"] = "postgresql://user:pass@127.0.0.1:5432/traffic"
+
 import pytest
 
 # Add src/ to path

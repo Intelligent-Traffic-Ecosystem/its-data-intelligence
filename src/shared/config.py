@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     api_port: int = 8000
     ws_broadcast_interval: int = 5
 
+    # Admin API
+    admin_api_key: str = "change-me"
+
     # Speed fallback (centroid-based)
     speed_tracker_ttl_seconds: int = 30
     speed_tracker_pixel_to_meter: float = 0.05

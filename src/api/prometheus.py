@@ -4,17 +4,17 @@ from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_
 router = APIRouter()
 
 # Define Prometheus metrics
-REQUEST_COUNT = Counter(
+REQUEST_COUNT = Counter(#count total AP request
     "b2_api_requests_total",
     "Total API requests",
     ["method", "endpoint", "status"],
 )
-REQUEST_LATENCY = Histogram(
+REQUEST_LATENCY = Histogram(#measure tme toget for request
     "b2_api_request_latency_seconds",
     "API request latency",
     ["endpoint"],
 )
-PROCESSING_ERRORS = Counter(
+PROCESSING_ERRORS = Counter(#count systemerrors
     "b2_processing_errors_total",
     "Total processing errors",
     ["type"],

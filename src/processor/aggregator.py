@@ -12,7 +12,7 @@ TumblingEventTimeWindows; the metric and congestion code stays the same.
 import logging
 import time
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timezone  
 
 from shared.schemas import TrafficEventInput
 from shared.config import settings
@@ -32,7 +32,7 @@ class WindowAggregator:
         )
         # per-lane: {(camera_id, lane_id): {window_key: [events]}}
         self._lane_windows: dict[
-            tuple[str, int], dict[int, list[TrafficEventInput]]
+                   tuple[str, int], dict[int, list[TrafficEventInput]]
         ] = defaultdict(lambda: defaultdict(list))
 
     def _window_key(self, ts: datetime) -> int:

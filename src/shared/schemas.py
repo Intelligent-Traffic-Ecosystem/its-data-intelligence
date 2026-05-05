@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # --- Input event from B1 via Kafka ---
@@ -57,3 +57,50 @@ class HealthResponse(BaseModel):
     status: str
     kafka: str
     postgres: str
+
+
+class Thresholds(BaseModel):
+    congestion_threshold_low: float = Field(ge=0, le=1)
+    congestion_threshold_moderate: float = Field(ge=0, le=1)
+    congestion_threshold_high: float = Field(ge=0, le=1)
+
+    @model_validator(mode="after")
+    def _validate_order(self) -> "Thresholds":
+        if not (
+            self.congestion_threshold_low
+            < self.congestion_threshold_moderate
+            < self.congestion_threshold_high
+        ):
+            raise ValueError("thresholds must be increasing (low < moderate < high)")
+        return self
+
+
+class Wgs84Point(BaseModel):
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
+
+
+class ZoneBase(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=1000)
+    coordinates: list[Wgs84Point] = Field(min_length=3)
+
+
+class ZoneCreate(ZoneBase):
+    pass
+
+
+class ZoneUpdate(ZoneBase):
+    pass
+
+
+class ZoneOut(ZoneBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class BroadcastNotification(BaseModel):
+    message: str = Field(min_length=1, max_length=1000)
+    severity: str = Field(default="info", pattern="^(info|warning|critical)$")
+    title: str | None = Field(default=None, max_length=200)

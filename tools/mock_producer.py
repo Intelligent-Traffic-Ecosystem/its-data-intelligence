@@ -16,11 +16,11 @@ from datetime import datetime, timezone
 
 from kafka import KafkaProducer
 
-VEHICLE_CLASSES = ["car", "car", "car", "car", "truck", "bus", "motorcycle", "bicycle"]
+VEHICLE_CLASSES = [ "car", "truck", "bus", "motorcycle", "bicycle"]
 CAMERA_IDS = ["cam_{:02d}".format(i) for i in range(1, 21)]
 
 
-def generate_event(
+def generate_event(  
     camera_id: str,
     vehicle_counter: int,
     with_lane: bool = False,
@@ -120,7 +120,7 @@ def main():
                 )
                 producer.send(
                     args.topic,
-                    value=json.dumps(event).encode("utf-8"),
+                    value=event,
                     key=camera.encode("utf-8"),
                 )
                 counter += 1
