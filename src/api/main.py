@@ -3,17 +3,31 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 
-from shared.db import engine
-from shared.logging_setup import configure_logging
-from shared.models import Base
-from api.routes import admin, cameras, congestion, health, metrics
-from api.websocket import router as ws_router
 from api.prometheus import (
     PROCESSING_ERRORS,
     REQUEST_COUNT,
     REQUEST_LATENCY,
+)
+from api.prometheus import (
     router as prom_router,
 )
+from api.routes import (
+    admin,
+    alerts,
+    analytics,
+    cameras,
+    congestion,
+    dashboard,
+    health,
+    metrics,
+)
+from api.routes import (
+    map as map_route,
+)
+from api.websocket import router as ws_router
+from shared.db import engine
+from shared.logging_setup import configure_logging
+from shared.models import Base
 
 configure_logging("b2-api")
 
@@ -57,6 +71,9 @@ app.include_router(metrics.router, tags=["metrics"])
 app.include_router(congestion.router, tags=["congestion"])
 app.include_router(health.router, tags=["health"])
 app.include_router(admin.router)
-app.include_router(ws_router) #websocket endpoint (live updates)
+app.include_router(alerts.router)
+app.include_router(analytics.router)
+app.include_router(dashboard.router)
+app.include_router(map_route.router)
+app.include_router(ws_router)  # websocket endpoint (live updates)
 app.include_router(prom_router)
-#This is the main FastAPI application that initializes the API, sets up the database, registers routes, and uses middleware to collect Prometheus metrics

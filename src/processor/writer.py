@@ -82,6 +82,19 @@ def write_metric(metric: dict) -> None:
             metric["window_start"],
             metric["congestion_level"],
         )
+        # Reconcile alerts only for camera-wide rows (lane_id is None) — per-lane
+        # rows would otherwise create duplicate alerts per camera.
+        if metric.get("lane_id") is None:
+            try:
+                from api.routes.alerts import reconcile_alert_for_metric
+
+                reconcile_alert_for_metric(session, metric)
+            except Exception:
+                logger.exception(
+                    "alert_reconcile_failed camera=%s window=%s",
+                    metric["camera_id"],
+                    metric["window_start"],
+                )
     except Exception:
         session.rollback()
         logger.exception("Failed to write metric for camera %s", metric["camera_id"])

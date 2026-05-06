@@ -1,6 +1,15 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, Float, Index, Integer, Text, UniqueConstraint, func
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    Float,
+    Index,
+    Integer,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -11,7 +20,11 @@ class Base(DeclarativeBase):
 class TrafficEvent(Base):
     __tablename__ = "traffic_events"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
     camera_id: Mapped[str] = mapped_column(Text, nullable=False)
     ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     vehicle_id: Mapped[str | None] = mapped_column(Text)
@@ -36,7 +49,11 @@ class TrafficEvent(Base):
 class TrafficMetric(Base):
     __tablename__ = "traffic_metrics"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
     camera_id: Mapped[str] = mapped_column(Text, nullable=False)
     window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     window_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -90,7 +107,11 @@ class MonitoringZone(Base):
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
     actor: Mapped[str] = mapped_column(Text, nullable=False)
     action: Mapped[str] = mapped_column(Text, nullable=False)
     entity_type: Mapped[str] = mapped_column(Text, nullable=False)
@@ -98,4 +119,59 @@ class AuditLog(Base):
     payload: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class Camera(Base):
+    __tablename__ = "cameras"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    camera_id: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    name: Mapped[str | None] = mapped_column(Text)
+    latitude: Mapped[float | None] = mapped_column(Float)
+    longitude: Mapped[float | None] = mapped_column(Float)
+    road_segment: Mapped[str | None] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        Index("ix_cameras_road_segment", "road_segment"),
+    )
+
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
+    severity: Mapped[str] = mapped_column(Text, nullable=False)  # WARNING|CRITICAL|EMERGENCY
+    alert_type: Mapped[str] = mapped_column(Text, nullable=False)  # congestion|stopped|incident
+    camera_id: Mapped[str | None] = mapped_column(Text)
+    road_segment: Mapped[str | None] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    message: Mapped[str | None] = mapped_column(Text)
+    congestion_level: Mapped[str | None] = mapped_column(Text)
+    congestion_score: Mapped[float | None] = mapped_column(Float)
+    triggered_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    acknowledged_by: Mapped[str | None] = mapped_column(Text)
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    payload: Mapped[str | None] = mapped_column(Text)  # JSON string
+
+    __table_args__ = (
+        Index("ix_alerts_triggered_at", triggered_at.desc()),
+        Index("ix_alerts_severity_triggered_at", "severity", triggered_at.desc()),
+        Index("ix_alerts_camera_triggered_at", "camera_id", triggered_at.desc()),
+        Index("ix_alerts_road_segment_triggered_at", "road_segment", triggered_at.desc()),
+        Index("ix_alerts_open", "camera_id", "alert_type", "resolved_at"),
     )

@@ -1,83 +1,29 @@
 import json
 import logging
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from api.auth import AdminActor, require_admin
+from api.auth import log_audit as _log_audit
 from api.websocket import manager
 from shared.config import settings
 from shared.db import get_db
-from shared.models import AdminThreshold, AuditLog, MonitoringZone
-from shared.schemas import BroadcastNotification, Thresholds, ZoneCreate, ZoneOut, ZoneUpdate
+from shared.models import AdminThreshold, Camera, MonitoringZone
+from shared.schemas import (
+    BroadcastNotification,
+    CameraCreate,
+    CameraOut,
+    CameraUpdate,
+    Thresholds,
+    ZoneCreate,
+    ZoneOut,
+    ZoneUpdate,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/admin", tags=["admin"])
-
-
-class AdminActor:
-    def __init__(self, actor_id: str):
-        self.actor_id = actor_id
-
-
-def _extract_bearer_token(authorization: str | None) -> str | None:
-    if not authorization:
-        return None
-    parts = authorization.split(" ")
-    if len(parts) == 2 and parts[0].lower() == "bearer":
-        return parts[1]
-    return None
-
-
-def require_admin(
-    x_admin_token: Annotated[str | None, Header(alias="X-Admin-Token")] = None,
-    authorization: Annotated[str | None, Header(alias="Authorization")] = None,
-    x_admin_user: Annotated[str | None, Header(alias="X-Admin-User")] = None,
-) -> AdminActor:
-    if not settings.admin_api_key or settings.admin_api_key == "change-me":
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Admin API key is not configured",
-        )
-
-    token = x_admin_token or _extract_bearer_token(authorization)
-    if token != settings.admin_api_key:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid admin credentials",
-        )
-
-    actor_id = x_admin_user or "admin"
-    return AdminActor(actor_id=actor_id)
-
-
-def _log_audit(
-    db: Session,
-    actor: str,
-    action: str,
-    entity_type: str,
-    entity_id: str | None,
-    payload: dict | None,
-) -> None:
-    entry = AuditLog(
-        actor=actor,
-        action=action,
-        entity_type=entity_type,
-        entity_id=entity_id,
-        payload=json.dumps(payload) if payload is not None else None,
-    )
-    db.add(entry)
-    db.commit()
-    logger.info(
-        "admin_action",
-        extra={
-            "actor": actor,
-            "action": action,
-            "entity_type": entity_type,
-            "entity_id": entity_id,
-        },
-    )
 
 
 def _zone_to_out(zone: MonitoringZone) -> ZoneOut:
@@ -257,6 +203,128 @@ def delete_zone(
         "monitoring_zones",
         str(zone.id),
         {"name": zone.name},
+    )
+
+
+def _camera_to_out(cam: Camera) -> CameraOut:
+    return CameraOut(
+        id=cam.id,
+        camera_id=cam.camera_id,
+        name=cam.name,
+        latitude=cam.latitude,
+        longitude=cam.longitude,
+        road_segment=cam.road_segment,
+        description=cam.description,
+        created_at=cam.created_at,
+        updated_at=cam.updated_at,
+    )
+
+
+@router.get("/cameras", response_model=list[CameraOut])
+def list_cameras_registry(
+    db: Session = Depends(get_db),
+    _: AdminActor = Depends(require_admin),
+):
+    rows = (
+        db.execute(select(Camera).order_by(Camera.camera_id.asc())).scalars().all()
+    )
+    return [_camera_to_out(r) for r in rows]
+
+
+@router.post(
+    "/cameras",
+    response_model=CameraOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_camera(
+    payload: CameraCreate,
+    db: Session = Depends(get_db),
+    actor: AdminActor = Depends(require_admin),
+):
+    existing = db.execute(
+        select(Camera).where(Camera.camera_id == payload.camera_id)
+    ).scalar_one_or_none()
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Camera {payload.camera_id} already exists",
+        )
+
+    cam = Camera(
+        camera_id=payload.camera_id,
+        name=payload.name,
+        latitude=payload.latitude,
+        longitude=payload.longitude,
+        road_segment=payload.road_segment,
+        description=payload.description,
+    )
+    db.add(cam)
+    db.commit()
+    db.refresh(cam)
+
+    _log_audit(
+        db,
+        actor.actor_id,
+        "cameras.create",
+        "cameras",
+        str(cam.id),
+        payload.model_dump(),
+    )
+    return _camera_to_out(cam)
+
+
+@router.put("/cameras/{camera_id}", response_model=CameraOut)
+def update_camera(
+    camera_id: str,
+    payload: CameraUpdate,
+    db: Session = Depends(get_db),
+    actor: AdminActor = Depends(require_admin),
+):
+    cam = db.execute(
+        select(Camera).where(Camera.camera_id == camera_id)
+    ).scalar_one_or_none()
+    if cam is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Camera not found")
+
+    updates = payload.model_dump(exclude_unset=True)
+    for k, v in updates.items():
+        setattr(cam, k, v)
+    db.commit()
+    db.refresh(cam)
+
+    _log_audit(
+        db,
+        actor.actor_id,
+        "cameras.update",
+        "cameras",
+        str(cam.id),
+        updates,
+    )
+    return _camera_to_out(cam)
+
+
+@router.delete("/cameras/{camera_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_camera(
+    camera_id: str,
+    db: Session = Depends(get_db),
+    actor: AdminActor = Depends(require_admin),
+):
+    cam = db.execute(
+        select(Camera).where(Camera.camera_id == camera_id)
+    ).scalar_one_or_none()
+    if cam is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Camera not found")
+
+    db.delete(cam)
+    db.commit()
+
+    _log_audit(
+        db,
+        actor.actor_id,
+        "cameras.delete",
+        "cameras",
+        str(cam.id),
+        {"camera_id": camera_id},
     )
 
 
