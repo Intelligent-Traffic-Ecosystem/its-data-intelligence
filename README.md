@@ -26,12 +26,12 @@ docker compose up -d --force-recreate
 
 # Send mock traffic events (for development without B1)
 pip install kafka-python
-python tools/mock_producer.py --cameras 4 --rate 10 --brokers localhost:29093
+python tools/mock_producer.py --cameras 4 --rate 10 --brokers localhost:29094
 
 # Check the API
-curl http://localhost:18000/health
-curl http://localhost:18000/cameras
-curl http://localhost:18000/congestion/current
+curl http://localhost:18001/health
+curl http://localhost:18001/cameras
+curl http://localhost:18001/congestion/current
 ```
 
 ## Demo Runbook
@@ -55,14 +55,14 @@ docker compose exec b2-stream-processor alembic upgrade head
 
 ### 2 — Health probe (Kafka + Postgres aware)
 ```bash
-curl -s http://localhost:18000/health | jq
+curl -s http://localhost:18001/health | jq
 # {"status":"ok","kafka":"ok","postgres":"ok"}
 ```
 
 Stop Kafka briefly to see the degraded path:
 ```bash
 docker compose stop kafka
-curl -s http://localhost:18000/health | jq
+curl -s http://localhost:18001/health | jq
 # {"status":"degraded","kafka":"unreachable","postgres":"ok"}   ← still HTTP 200
 docker compose start kafka
 ```
@@ -76,7 +76,7 @@ Every line is one JSON object with `time`, `level`, `logger`, `message`. Library
 ### 4 — Send B1-shaped events
 ```bash
 pip install kafka-python
-python tools/mock_producer.py --cameras 4 --rate 10 --brokers localhost:29093
+python tools/mock_producer.py --cameras 4 --rate 10 --brokers localhost:29094
 ```
 
 In another terminal, watch windows close:
@@ -107,7 +107,7 @@ ORDER BY window_start DESC LIMIT 5;"
 ### 7 — Per-lane breakdown
 Restart the producer with lanes:
 ```bash
-python tools/mock_producer.py --cameras 4 --rate 10 --with-lanes --brokers localhost:29093
+python tools/mock_producer.py --cameras 4 --rate 10 --with-lanes --brokers localhost:29094
 ```
 
 After ~15s:
@@ -122,7 +122,7 @@ One camera now produces both a camera-wide row and per-lane rows for the same 5s
 
 ### 8 — Speed fallback when B1 omits speed_estimate
 ```bash
-python tools/mock_producer.py --cameras 4 --rate 15 --no-speed --brokers localhost:29093
+python tools/mock_producer.py --cameras 4 --rate 15 --no-speed --brokers localhost:29094
 ```
 
 After ~3 windows:
@@ -136,25 +136,25 @@ ORDER BY window_start DESC LIMIT 5;"
 
 ### 9 — REST endpoints (the contract for B3)
 ```bash
-curl -s localhost:18000/cameras | jq
-curl -s "localhost:18000/metrics/current?camera_id=cam_01" | jq
-curl -s "localhost:18000/metrics/history?camera_id=cam_01&from=2026-05-01T00:00:00Z&to=2026-05-02T00:00:00Z" | jq
-curl -s localhost:18000/congestion/current | jq
+curl -s localhost:18001/cameras | jq
+curl -s "localhost:18001/metrics/current?camera_id=cam_01" | jq
+curl -s "localhost:18001/metrics/history?camera_id=cam_01&from=2026-05-01T00:00:00Z&to=2026-05-02T00:00:00Z" | jq
+curl -s localhost:18001/congestion/current | jq
 ```
 
 ### 10 — WebSocket live stream
 ```bash
 # all cameras (default — camera-wide rows only)
-websocat ws://localhost:18000/ws/metrics
+websocat ws://localhost:18001/ws/metrics
 
 # single camera
-websocat 'ws://localhost:18000/ws/metrics?camera_id=cam_01'
+websocat 'ws://localhost:18001/ws/metrics?camera_id=cam_01'
 ```
 
 ### 11 — Prometheus metrics (two endpoints)
 ```bash
 # API process: 8000
-curl -s localhost:18000/metrics | grep -E '^b2_api_requests_total|^b2_api_request_latency'
+curl -s localhost:18001/metrics | grep -E '^b2_api_requests_total|^b2_api_request_latency'
 
 # Processor process: 9100
 curl -s localhost:9100/metrics | grep -E '^b2_events_processed_total|^b2_window_flushes_total|^b2_kafka_consumer_lag'
@@ -190,7 +190,7 @@ Coverage:
 | Speed fallback | `--no-speed` run | tracking-based estimate when B1 omits it |
 | Kafka-aware health | `/health` while Kafka is stopped | reports `degraded`, still HTTP 200 |
 | Structured logs | `docker compose logs ... \| jq` | one JSON object per line, lib logs included |
-| Two Prometheus endpoints | `:18000/metrics`, `:9100/metrics` | API + processor instrumented |
+| Two Prometheus endpoints | `:18001/metrics`, `:9100/metrics` | API + processor instrumented |
 | WebSocket camera filter | `?camera_id=X` | B3 can subscribe to one camera |
 | Retention enforced | manual `sweep()` invocation | events 24h, metrics 30d (SRS §7) |
 | Integration tests | `make test-integration` | testcontainers Kafka + Postgres in CI |
@@ -215,8 +215,8 @@ make lint
 
 # Run mock producer
 make mock                                      # plain B1-shaped events
-python tools/mock_producer.py --with-lanes --brokers localhost:29093     # include lane_id ~80% of events
-python tools/mock_producer.py --no-speed --brokers localhost:29093       # exercise B2 speed fallback
+python tools/mock_producer.py --with-lanes --brokers localhost:29094     # include lane_id ~80% of events
+python tools/mock_producer.py --no-speed --brokers localhost:29094       # exercise B2 speed fallback
 
 # View logs
 make logs
@@ -240,7 +240,7 @@ Per SRS §7, the processor sweeps old rows on a configurable interval
 | GET | `/metrics/history?camera_id=X&from=T1&to=T2` | Historical metrics |
 | GET | `/congestion/current` | Current congestion for all cameras |
 | GET | `/health` | Liveness probe (checks Kafka + Postgres) |
-| GET | `/metrics` | Prometheus scrape endpoint (b2-api on :18000) |
+| GET | `/metrics` | Prometheus scrape endpoint (b2-api on :18001) |
 | WS | `/ws/metrics[?camera_id=X]` | Live metric updates (every 5s); optional camera filter |
 
 The processor exposes its own Prometheus endpoint on port `9100`:
