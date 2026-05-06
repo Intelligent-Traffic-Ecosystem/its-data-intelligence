@@ -3,14 +3,14 @@ services:
   kafka:
     image: soldevelo/kafka
     ports:
-      - "29093:29092"   # EXTERNAL — for clients on the host (mock_producer venv, kafka-ui, debug tools)
+      - "29094:29092"   # EXTERNAL — for clients on the host (mock_producer venv, kafka-ui, debug tools)
     environment:
       # soldevelo/kafka is Bitnami-derived → requires KAFKA_CFG_* prefix
       KAFKA_CFG_NODE_ID: 1
       KAFKA_CFG_PROCESS_ROLES: broker,controller
       # Two PLAINTEXT-style listeners: PLAINTEXT for inside docker, EXTERNAL for host
       KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:29092
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29094
       KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
@@ -23,7 +23,7 @@ services:
   postgres:
     image: postgres:16
     ports:
-      - "5432:5432"
+      - "5434:5432"
     environment:
       POSTGRES_DB: traffic
       POSTGRES_USER: user
@@ -38,7 +38,7 @@ services:
       dockerfile: docker/Dockerfile.processor
     command: standalone-job --python /app/processor/main.py
     ports:
-      - "8081:8081"
+      - "8082:8081"
     depends_on:
       - kafka
       - postgres
@@ -77,7 +77,7 @@ services:
     depends_on:
       - postgres
     ports:
-      - "18000:8000"
+      - "18001:8000"
     environment:
       POSTGRES_URL: postgresql://user:pass@postgres:5432/traffic
     restart: on-failure
