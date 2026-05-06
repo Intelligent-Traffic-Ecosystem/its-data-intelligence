@@ -1,0 +1,132 @@
+# ==============================================================================
+# ST-GCN Traffic Forecasting — Configuration
+# ==============================================================================
+
+database:
+  url: "postgresql://user:pass@localhost:5432/traffic"
+  pool_size: 5
+  max_overflow: 10
+
+kafka:
+  brokers: "kafka:9092"
+  topic_metrics: "traffic.metrics"          # downstream metrics topic (optional)
+  topic_predictions: "traffic.predictions"  # output topic for predictions
+  consumer_group: "stgcn-predictor"
+  auto_offset_reset: "latest"
+
+# ---------------------------------------------------------------------------
+# Lane / camera topology — defines the graph edges
+# Each entry maps a camera to its ordered list of lane IDs.
+# Edges are automatically added between adjacent lanes on the same camera.
+# Cross-camera edges can be defined explicitly under cross_camera_edges.
+# ---------------------------------------------------------------------------
+topology:
+  cameras:
+    - camera_id: "cam-001"
+      lane_ids: [1, 2, 3, 4]
+    - camera_id: "cam-002"
+      lane_ids: [1, 2, 3]
+    - camera_id: "cam-003"
+      lane_ids: [1, 2, 3, 4]
+
+  # Optional: bidirectional cross-camera lane connections
+  # (e.g. exit lane of cam-001 feeds into entry lane of cam-002)
+  cross_camera_edges:
+    - from_camera: "cam-001"
+      from_lane: 4
+      to_camera: "cam-002"
+      to_lane: 1
+    - from_camera: "cam-002"
+      from_lane: 3
+      to_camera: "cam-003"
+      to_lane: 1
+
+# ---------------------------------------------------------------------------
+# Feature engineering
+# ---------------------------------------------------------------------------
+features:
+  node_features:
+    - vehicle_count
+    - avg_speed_kmh
+    - stopped_ratio
+    - congestion_score
+    - hour_sin               # cyclical time-of-day encoding
+    - hour_cos
+    - dow_sin                # cyclical day-of-week encoding
+    - dow_cos
+  input_window: 12           # number of past 5-s windows used as input  (= 60 s)
+  output_horizon: 360        # number of future 5-s windows to forecast  (= 30 min)
+  window_size_seconds: 5
+
+  normalization:
+    vehicle_count_max: 50
+    speed_max_kmh: 60.0
+
+# ---------------------------------------------------------------------------
+# ST-GCN model hyper-parameters
+# ---------------------------------------------------------------------------
+model:
+  hidden_channels: 64
+  num_stgcn_blocks: 3
+  temporal_kernel_size: 3    # TCN kernel along the time axis
+  cheb_k: 3                  # Chebyshev polynomial order for spatial conv
+  dropout: 0.1
+
+  # Multi-task output heads
+  heads:
+    vehicle_count: true      # regression
+    congestion_prob: true    # per-step probability  (sigmoid)
+    congestion_level: true   # LOW / MEDIUM / HIGH classification
+
+  # Loss weights for multi-task learning
+  loss_weights:
+    vehicle_count: 1.0
+    congestion_prob: 0.5
+    congestion_level: 0.5
+
+# ---------------------------------------------------------------------------
+# Training
+# ---------------------------------------------------------------------------
+training:
+  epochs: 100
+  batch_size: 32
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-4
+  lr_scheduler:
+    type: "cosine"           # "cosine" | "step" | "none"
+    T_max: 100               # cosine: period; step: step_size
+    eta_min: 1.0e-5
+  early_stopping_patience: 10
+  val_fraction: 0.15
+  test_fraction: 0.10
+  checkpoint_dir: "checkpoints"
+  log_interval: 10           # log every N batches
+
+# ---------------------------------------------------------------------------
+# Inference / real-time prediction
+# ---------------------------------------------------------------------------
+inference:
+  checkpoint_path: "checkpoints/best_model.pt"
+  device: "cpu"              # "cpu" | "cuda" | "mps"
+  poll_interval_seconds: 5   # how often to re-run prediction
+  db_lookback_minutes: 10    # how many minutes of history to fetch from DB
+
+  congestion:
+    start_threshold: 0.55    # prob above which congestion is considered "started"
+    end_threshold: 0.30      # prob below which congestion is considered "ended"
+    min_duration_steps: 3    # min consecutive steps to confirm start/end
+
+# ---------------------------------------------------------------------------
+# API
+# ---------------------------------------------------------------------------
+api:
+  host: "0.0.0.0"
+  port: 8001
+  log_level: "info"
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+logging:
+  level: "INFO"
+  format: "json"             # "json" | "text"
