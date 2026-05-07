@@ -61,7 +61,9 @@ class HealthResponse(BaseModel):
     postgres: str
 
 class AlertOutput(BaseModel):
+    alert_id: str
     camera_id: str
+    road_segment: str | None = None
     lane_id: int | None = None
     alert_type: str
     severity: str
@@ -73,3 +75,17 @@ class AlertOutput(BaseModel):
     vehicle_count: int
     avg_speed_kmh: float
     queue_length: int
+    acknowledged: bool = False
+    acknowledged_by: str | None = None
+    acknowledged_at: datetime | None = None
+
+
+class AlertAcknowledgeRequest(BaseModel):
+    admin_id: str
+
+
+class AlertAcknowledgeResponse(BaseModel):
+    alert_id: str
+    admin_id: str
+    acknowledged_at: datetime
+    status: str

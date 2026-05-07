@@ -55,3 +55,15 @@ class TrafficMetric(Base):
         ),
         Index("ix_traffic_metrics_camera_window", "camera_id", window_start.desc()),
     )
+
+class AlertAcknowledgement(Base):
+    __tablename__ = "alert_acknowledgements"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    alert_id: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    admin_id: Mapped[str] = mapped_column(Text, nullable=False)
+    acknowledged_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("ix_alert_acknowledgements_alert_id", "alert_id"),
+    )
