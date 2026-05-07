@@ -1,6 +1,7 @@
 import csv
 import io
 from datetime import UTC, datetime
+from typing import Annotated, TypeAlias
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -14,6 +15,8 @@ from shared.schemas import (
     AlertAcknowledgeResponse,
     AlertOutput,
 )
+
+DbSession: TypeAlias = Annotated[Session, Depends(get_db)]
 
 router = APIRouter(prefix="/alerts")
 
@@ -110,7 +113,7 @@ def _query_alert_metrics(
 
 
 @router.get("/current", response_model=list[AlertOutput])
-def get_current_alerts(db: Session = Depends(get_db)):
+def get_current_alerts(db: DbSession):
     latest = (
         select(
             TrafficMetric.camera_id,
@@ -147,25 +150,40 @@ def get_current_alerts(db: Session = Depends(get_db)):
 
 @router.get("/history", response_model=list[AlertOutput])
 def get_alert_history(
+    db: DbSession,
     severity: str | None = Query(None),
     road_segment: str | None = Query(None),
     start: datetime = Query(..., alias="from"),
     end: datetime = Query(..., alias="to"),
     alert_type: str | None = Query(None, alias="type"),
-    db: Session = Depends(get_db),
 ):
     return _query_alert_metrics(db, start, end, severity, road_segment, alert_type)
 
 
-@router.post("/{alert_id}/acknowledge", response_model=AlertAcknowledgeResponse)
+@router.post(
+    "/{alert_id}/acknowledge",
+    response_model=AlertAcknowledgeResponse,
+    responses={
+        400: {"description": "Metric does not qualify for acknowledgement"},
+        404: {"description": "Alert not found"},
+    },
+)
 def acknowledge_alert(
     alert_id: str,
     payload: AlertAcknowledgeRequest,
-    db: Session = Depends(get_db),
+    db: DbSession,
 ):
     existing = db.execute(
         select(AlertAcknowledgement).where(AlertAcknowledgement.alert_id == alert_id)
     ).scalar_one_or_none()
+
+    if existing:
+        return AlertAcknowledgeResponse(
+            alert_id=existing.alert_id,
+            admin_id=existing.admin_id,
+            acknowledged_at=existing.acknowledged_at,
+            status="already_acknowledged",
+        )
 
     try:
         metric_id = int(alert_id.split("-")[1])
@@ -179,6 +197,8 @@ def acknowledge_alert(
     if metric is None:
         raise HTTPException(status_code=404, detail="Alert not found")
 
+    if alert_id != _alert_id(metric):
+        raise HTTPException(status_code=404, detail="Alert not found")
     alert = _metric_to_alert(metric)
 
     if alert is None:
@@ -188,14 +208,6 @@ def acknowledge_alert(
         raise HTTPException(
             status_code=400,
             detail="Only CRITICAL or EMERGENCY alerts can be acknowledged",
-        )
-
-    if existing:
-        return AlertAcknowledgeResponse(
-            alert_id=existing.alert_id,
-            admin_id=existing.admin_id,
-            acknowledged_at=existing.acknowledged_at,
-            status="already_acknowledged",
         )
 
     ack = AlertAcknowledgement(
@@ -217,12 +229,12 @@ def acknowledge_alert(
 
 @router.get("/export")
 def export_alert_history(
+    db: DbSession,
     severity: str | None = Query(None),
     road_segment: str | None = Query(None),
     start: datetime = Query(..., alias="from"),
     end: datetime = Query(..., alias="to"),
     alert_type: str | None = Query(None, alias="type"),
-    db: Session = Depends(get_db),
 ):
     alerts = _query_alert_metrics(db, start, end, severity, road_segment, alert_type)
 
