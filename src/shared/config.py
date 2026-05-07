@@ -3,6 +3,8 @@ import json
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
+ERROR_PREFIX = "Invalid CAMERA_CALIBRATIONS / camera_calibrations:"
+
 
 class Settings(BaseSettings):
     # Kafka
@@ -54,21 +56,24 @@ class Settings(BaseSettings):
             try:
                 parsed_value = json.loads(value)
             except json.JSONDecodeError as exc:
-                raise ValueError(
-                    "Invalid CAMERA_CALIBRATIONS / camera_calibrations: must be valid JSON"
-                ) from exc
+                raise ValueError(f"{ERROR_PREFIX} must be valid JSON") from exc
 
         if not isinstance(parsed_value, dict):
-            raise ValueError(
-                "Invalid CAMERA_CALIBRATIONS / camera_calibrations: must be a JSON object"
-            )
+            raise ValueError(f"{ERROR_PREFIX} must be a JSON object")
+
+        normalized = {}
 
         try:
-            return {str(key): float(raw_value) for key, raw_value in parsed_value.items()}
+            for key, raw_value in parsed_value.items():
+                if isinstance(raw_value, bool):
+                    raise ValueError(f"{ERROR_PREFIX} values must be numeric")
+
+                normalized[str(key)] = float(raw_value)
+
+            return normalized
+
         except (TypeError, ValueError) as exc:
-            raise ValueError(
-                "Invalid CAMERA_CALIBRATIONS / camera_calibrations: values must be numeric"
-            ) from exc
+            raise ValueError(f"{ERROR_PREFIX} values must be numeric") from exc
 
     # Raw event batched writer
     raw_writer_batch_size: int = 200
