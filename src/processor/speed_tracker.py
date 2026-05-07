@@ -1,7 +1,8 @@
 """Centroid-based speed fallback.
 
 The pixel-to-meter calibration can be configured per camera using the
-CAMERA_CALIBRATIONS env var, falling back to speed_tracker_pixel_to_meter.
+CAMERA_CALIBRATIONS env var, falling back to the
+SPEED_TRACKER_PIXEL_TO_METER env var.
 """
 
 from __future__ import annotations
@@ -28,7 +29,7 @@ class SpeedTracker:
             camera_calibrations if camera_calibrations is not None else settings.camera_calibrations
         )
         # vehicle_id -> (centroid_x, centroid_y, last_ts)
-        self._last: dict[str, tuple[int, int, datetime]] = {}
+        self._last: dict[str, tuple[float, float, datetime]] = {}
 
     def estimate(self, event: TrafficEventInput) -> float | None:
         """Return km/h estimate or None on first sighting / zero dt.
