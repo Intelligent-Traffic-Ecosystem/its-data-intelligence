@@ -10,6 +10,10 @@ from api.prometheus import (
 )
 from api.prometheus import router as prom_router
 from api.routes import admin, alerts, cameras, congestion, health, metrics
+from api.prometheus import (
+    router as prom_router,
+)
+from api.routes import alerts, cameras, congestion, health, metrics
 from api.websocket import router as ws_router
 from shared.db import engine
 from shared.logging_setup import configure_logging

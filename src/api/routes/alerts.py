@@ -254,3 +254,4 @@ def export_alert_history(
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=alert_history.csv"},
     )
+
