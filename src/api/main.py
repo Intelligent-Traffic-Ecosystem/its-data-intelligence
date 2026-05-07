@@ -11,9 +11,10 @@ from api.prometheus import (
 from api.prometheus import router as prom_router
 from api.routes import admin, alerts, cameras, congestion, health, metrics
 from api.websocket import router as ws_router
-from shared.db import engine
+from shared.db import SessionLocal, engine
 from shared.logging_setup import configure_logging
 from shared.models import Base
+from shared.threshold_loader import load_thresholds_from_db
 
 configure_logging("b2-api")
 
@@ -22,6 +23,9 @@ configure_logging("b2-api")
 async def lifespan(app: FastAPI):
     configure_logging("b2-api")
     Base.metadata.create_all(bind=engine)
+    # Load admin thresholds from database
+    with SessionLocal() as db:
+        load_thresholds_from_db(db)
     yield
 
 

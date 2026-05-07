@@ -128,6 +128,12 @@ def update_thresholds(
     db: Session = Depends(get_db),
     actor: AdminActor = Depends(require_admin),
 ):
+    """Update congestion thresholds.
+
+    Note: Threshold changes are persisted to the database and will be loaded
+    at the next processor/API restart. To apply changes immediately to a running
+    system, restart the processor service after updating thresholds.
+    """
     row = (
         db.execute(select(AdminThreshold).order_by(AdminThreshold.id.asc()).limit(1))
         .scalar_one_or_none()
