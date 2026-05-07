@@ -90,3 +90,45 @@ class AlertAcknowledgeResponse(BaseModel):
     admin_id: str
     acknowledged_at: datetime
     status: str
+
+
+class DashboardSummaryResponse(BaseModel):
+    active_cameras: int
+    total_vehicles: int
+    average_speed: float
+    severe_congestion_count: int
+    busiest_camera_id: str | None = None
+
+
+class TrafficEventOutput(BaseModel):
+    id: int
+    camera_id: str
+    timestamp: datetime
+    vehicle_id: str | None = None
+    vehicle_class: str | None = None
+    speed_kmh: float | None = None
+    confidence: float | None = None
+    lane_id: int | None = None
+    bbox_x: int | None = None
+    bbox_y: int | None = None
+    bbox_w: int | None = None
+    bbox_h: int | None = None
+
+
+class HeatmapDataOutput(BaseModel):
+    camera_id: str
+    latitude: float | None = None
+    longitude: float | None = None
+    vehicle_count: int
+    congestion_score: float
+    congestion_level: str
+
+
+class IncidentOutput(BaseModel):
+    incident_id: str
+    camera_id: str
+    latitude: float | None = None
+    longitude: float | None = None
+    severity: str
+    description: str
+    timestamp: datetime

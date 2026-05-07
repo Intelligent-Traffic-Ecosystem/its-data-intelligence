@@ -140,6 +140,12 @@ curl -s localhost:18001/cameras | jq
 curl -s "localhost:18001/metrics/current?camera_id=cam_01" | jq
 curl -s "localhost:18001/metrics/history?camera_id=cam_01&from=2026-05-01T00:00:00Z&to=2026-05-02T00:00:00Z" | jq
 curl -s localhost:18001/congestion/current | jq
+curl -s localhost:18001/api/dashboard/summary | jq
+curl -s "localhost:18001/api/dashboard/summary?from=2026-05-01T00:00:00Z&to=2026-05-02T00:00:00Z" | jq
+curl -s "localhost:18001/api/dashboard/events?limit=5" | jq
+curl -s "localhost:18001/api/dashboard/events?limit=3&camera_id=cam_01" | jq
+curl -s localhost:18001/api/map/heatmap | jq
+curl -s localhost:18001/api/map/incidents | jq
 ```
 
 ### 10 — WebSocket live stream
@@ -240,6 +246,10 @@ Per SRS §7, the processor sweeps old rows on a configurable interval
 | GET | `/metrics/history?camera_id=X&from=T1&to=T2` | Historical metrics |
 | GET | `/congestion/current` | Current congestion for all cameras |
 | GET | `/health` | Liveness probe (checks Kafka + Postgres) |
+| GET | `/api/dashboard/summary` | KPIs: active cameras, total vehicles, avg speed, congestion |
+| GET | `/api/dashboard/events` | Latest traffic events (filterable by camera, limit) |
+| GET | `/api/map/heatmap` | Per-camera congestion heatmap data |
+| GET | `/api/map/incidents` | Active HIGH/SEVERE congestion incidents |
 | GET | `/metrics` | Prometheus scrape endpoint (b2-api on :18001) |
 | WS | `/ws/metrics[?camera_id=X]` | Live metric updates (every 5s); optional camera filter |
 
