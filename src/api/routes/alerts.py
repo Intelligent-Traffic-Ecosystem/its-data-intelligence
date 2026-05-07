@@ -2,7 +2,7 @@ import csv
 import io
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -15,7 +15,7 @@ from shared.schemas import (
     AlertOutput,
 )
 
-router = APIRouter(prefix="/api/alerts")
+router = APIRouter(prefix="/alerts")
 
 
 def _alert_id(row: TrafficMetric) -> str:
@@ -40,10 +40,12 @@ def _metric_to_alert(
     else:
         severity = "HIGH"
 
+    road_segment = getattr(row, "road_segment", None) or row.camera_id
+
     return AlertOutput(
         alert_id=_alert_id(row),
         camera_id=row.camera_id,
-        road_segment=row.camera_id,
+        road_segment=road_segment,
         lane_id=row.lane_id,
         alert_type="CONGESTION",
         severity=severity,
@@ -147,8 +149,8 @@ def get_current_alerts(db: Session = Depends(get_db)):
 def get_alert_history(
     severity: str | None = Query(None),
     road_segment: str | None = Query(None),
-    start: datetime | None = Query(None, alias="from"),
-    end: datetime | None = Query(None, alias="to"),
+    start: datetime = Query(..., alias="from"),
+    end: datetime = Query(..., alias="to"),
     alert_type: str | None = Query(None, alias="type"),
     db: Session = Depends(get_db),
 ):
@@ -164,6 +166,29 @@ def acknowledge_alert(
     existing = db.execute(
         select(AlertAcknowledgement).where(AlertAcknowledgement.alert_id == alert_id)
     ).scalar_one_or_none()
+
+    try:
+        metric_id = int(alert_id.split("-")[1])
+    except (IndexError, ValueError):
+        raise HTTPException(status_code=404, detail="Alert not found")
+
+    metric = db.execute(
+        select(TrafficMetric).where(TrafficMetric.id == metric_id)
+    ).scalar_one_or_none()
+
+    if metric is None:
+        raise HTTPException(status_code=404, detail="Alert not found")
+
+    alert = _metric_to_alert(metric)
+
+    if alert is None:
+        raise HTTPException(status_code=400, detail="Metric does not qualify as an alert")
+
+    if alert.severity not in {"CRITICAL", "EMERGENCY"}:
+        raise HTTPException(
+            status_code=400,
+            detail="Only CRITICAL or EMERGENCY alerts can be acknowledged",
+        )
 
     if existing:
         return AlertAcknowledgeResponse(
@@ -194,8 +219,8 @@ def acknowledge_alert(
 def export_alert_history(
     severity: str | None = Query(None),
     road_segment: str | None = Query(None),
-    start: datetime | None = Query(None, alias="from"),
-    end: datetime | None = Query(None, alias="to"),
+    start: datetime = Query(..., alias="from"),
+    end: datetime = Query(..., alias="to"),
     alert_type: str | None = Query(None, alias="type"),
     db: Session = Depends(get_db),
 ):
