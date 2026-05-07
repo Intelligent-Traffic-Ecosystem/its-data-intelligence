@@ -23,10 +23,7 @@ def _alert_id(row: TrafficMetric) -> str:
     return f"metric-{row.id}-{row.camera_id}-{lane}"
 
 
-def _metric_to_alert(
-    row: TrafficMetric,
-    ack: AlertAcknowledgement | None = None,
-) -> AlertOutput | None:
+def _metric_to_alert(row: TrafficMetric, ack: AlertAcknowledgement | None = None) -> AlertOutput | None:
     level = row.congestion_level or "LOW"
     score = row.congestion_score or 0.0
 
@@ -64,11 +61,15 @@ def _metric_to_alert(
 def _ack_map(db: Session, alert_ids: list[str]) -> dict[str, AlertAcknowledgement]:
     if not alert_ids:
         return {}
+
     rows = (
-        db.execute(select(AlertAcknowledgement).where(AlertAcknowledgement.alert_id.in_(alert_ids)))
+        db.execute(
+            select(AlertAcknowledgement).where(AlertAcknowledgement.alert_id.in_(alert_ids))
+        )
         .scalars()
         .all()
     )
+
     return {row.alert_id: row for row in rows}
 
 
@@ -89,7 +90,10 @@ def _query_alert_metrics(
     if road_segment:
         stmt = stmt.where(TrafficMetric.camera_id == road_segment)
 
-    rows = db.execute(stmt.order_by(TrafficMetric.window_start.desc())).scalars().all()
+    rows = db.execute(
+        stmt.order_by(TrafficMetric.window_start.desc())
+    ).scalars().all()
+
     ids = [_alert_id(row) for row in rows]
     acks = _ack_map(db, ids)
 
@@ -100,9 +104,9 @@ def _query_alert_metrics(
     ]
 
     if severity:
-        alerts = [alert for alert in alerts if alert.severity == severity.upper()]
+        alerts = [a for a in alerts if a.severity == severity.upper()]
     if alert_type:
-        alerts = [alert for alert in alerts if alert.alert_type == alert_type.upper()]
+        alerts = [a for a in alerts if a.alert_type == alert_type.upper()]
 
     return alerts
 
@@ -178,6 +182,7 @@ def acknowledge_alert(
         admin_id=payload.admin_id,
         acknowledged_at=datetime.now(UTC),
     )
+
     db.add(ack)
     db.commit()
     db.refresh(ack)
@@ -203,55 +208,52 @@ def export_alert_history(
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(
-        [
-            "alert_id",
-            "camera_id",
-            "road_segment",
-            "lane_id",
-            "alert_type",
-            "severity",
-            "message",
-            "window_start",
-            "window_end",
-            "congestion_level",
-            "congestion_score",
-            "vehicle_count",
-            "avg_speed_kmh",
-            "queue_length",
-            "acknowledged",
-            "acknowledged_by",
-            "acknowledged_at",
-        ]
-    )
+
+    writer.writerow([
+        "alert_id",
+        "camera_id",
+        "road_segment",
+        "lane_id",
+        "alert_type",
+        "severity",
+        "message",
+        "window_start",
+        "window_end",
+        "congestion_level",
+        "congestion_score",
+        "vehicle_count",
+        "avg_speed_kmh",
+        "queue_length",
+        "acknowledged",
+        "acknowledged_by",
+        "acknowledged_at",
+    ])
 
     for alert in alerts:
-        writer.writerow(
-            [
-                alert.alert_id,
-                alert.camera_id,
-                alert.road_segment,
-                alert.lane_id,
-                alert.alert_type,
-                alert.severity,
-                alert.message,
-                alert.window_start.isoformat(),
-                alert.window_end.isoformat(),
-                alert.congestion_level,
-                alert.congestion_score,
-                alert.vehicle_count,
-                alert.avg_speed_kmh,
-                alert.queue_length,
-                alert.acknowledged,
-                alert.acknowledged_by,
-                alert.acknowledged_at.isoformat() if alert.acknowledged_at else "",
-            ]
-        )
+        writer.writerow([
+            alert.alert_id,
+            alert.camera_id,
+            alert.road_segment,
+            alert.lane_id,
+            alert.alert_type,
+            alert.severity,
+            alert.message,
+            alert.window_start.isoformat(),
+            alert.window_end.isoformat(),
+            alert.congestion_level,
+            alert.congestion_score,
+            alert.vehicle_count,
+            alert.avg_speed_kmh,
+            alert.queue_length,
+            alert.acknowledged,
+            alert.acknowledged_by,
+            alert.acknowledged_at.isoformat() if alert.acknowledged_at else "",
+        ])
 
     output.seek(0)
+
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=alert_history.csv"},
     )
-
