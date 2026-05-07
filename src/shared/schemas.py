@@ -90,3 +90,52 @@ class AlertAcknowledgeResponse(BaseModel):
     admin_id: str
     acknowledged_at: datetime
     status: str
+
+
+class PeakHourTrend(BaseModel):
+    hour: int
+    average_congestion: float
+    average_speed_kmh: float
+    vehicle_count: int
+
+
+class TopSegment(BaseModel):
+    camera_id: str
+    lane_id: int | None = None
+    average_congestion: float
+    average_queue_length: float
+    incident_count: int
+
+
+class IncidentSummary(BaseModel):
+    total_incidents: int
+    high: int
+    critical: int
+
+
+class AnalyticsMetricsResponse(BaseModel):
+    start: datetime
+    end: datetime
+    average_congestion: float
+    peak_hour_trends: list[PeakHourTrend]
+    top_segments: list[TopSegment]
+    incidents: IncidentSummary
+
+
+class AnalyticsRangeSummary(BaseModel):
+    start: datetime
+    end: datetime
+    average_congestion: float
+    vehicle_count: int
+    average_speed_kmh: float
+    incident_count: int
+    peak_hour: int | None = None
+
+
+class AnalyticsCompareResponse(BaseModel):
+    range_a: AnalyticsRangeSummary
+    range_b: AnalyticsRangeSummary
+    congestion_delta: float
+    vehicle_count_delta: int
+    speed_delta: float
+    incident_delta: int
