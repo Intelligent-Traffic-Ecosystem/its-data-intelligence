@@ -17,6 +17,10 @@ def load_thresholds_from_db(db: Session) -> None:
     If no thresholds exist in the database, the current settings values are preserved.
     This function should be called at application startup to ensure the processor
     and API use database-configured thresholds.
+
+    The query selects the first row ordered by ID. In normal operation, only one
+    threshold record should exist (created via the admin API). If multiple records
+    exist due to manual DB operations, the lowest ID is used for consistency.
     """
     try:
         row = (
@@ -38,4 +42,11 @@ def load_thresholds_from_db(db: Session) -> None:
         else:
             logger.info("no_thresholds_in_db_using_defaults")
     except Exception:
-        logger.exception("failed_to_load_thresholds_from_db")
+        logger.exception(
+            "failed_to_load_thresholds_from_db_using_defaults",
+            extra={
+                "low": settings.congestion_threshold_low,
+                "moderate": settings.congestion_threshold_moderate,
+                "high": settings.congestion_threshold_high,
+            },
+        )
