@@ -65,7 +65,6 @@ class ConnectionManager:
         for ws in disconnected:
             self.disconnect(ws)
 
-
 manager = ConnectionManager()
 
 
@@ -76,7 +75,7 @@ def _fetch_latest_metrics(camera_filter: str | None = None) -> list[dict]:
     """
     db = SessionLocal()
     try:
-        latest = (
+        latest = (#camerawde dataonly not lane breakdowns
             select(
                 TrafficMetric.camera_id,
                 func.max(TrafficMetric.window_start).label("max_ws"),

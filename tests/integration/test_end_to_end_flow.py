@@ -12,6 +12,8 @@ import time
 from datetime import datetime, timezone
 
 import pytest
+
+pytest.importorskip("pyflink")
 from pyflink.datastream import StreamExecutionEnvironment
 from sqlalchemy import select
 

@@ -1,6 +1,15 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, Float, Index, Integer, Text, UniqueConstraint, func
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    Float,
+    Index,
+    Integer,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -78,7 +87,7 @@ class MonitoringZone(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    polygon_wgs84: Mapped[str] = mapped_column(Text, nullable=False)
+    polygon_wgs84: Mapped[str] = mapped_column(Text, nullable=False)  # JSON string
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -95,7 +104,7 @@ class AuditLog(Base):
     action: Mapped[str] = mapped_column(Text, nullable=False)
     entity_type: Mapped[str] = mapped_column(Text, nullable=False)
     entity_id: Mapped[str | None] = mapped_column(Text)
-    payload: Mapped[str | None] = mapped_column(Text)
+    payload: Mapped[str | None] = mapped_column(Text)  # JSON string
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

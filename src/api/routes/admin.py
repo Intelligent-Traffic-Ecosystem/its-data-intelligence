@@ -10,7 +10,13 @@ from api.websocket import manager
 from shared.config import settings
 from shared.db import get_db
 from shared.models import AdminThreshold, AuditLog, MonitoringZone
-from shared.schemas import BroadcastNotification, Thresholds, ZoneCreate, ZoneOut, ZoneUpdate
+from shared.schemas import (
+    BroadcastNotification,
+    Thresholds,
+    ZoneCreate,
+    ZoneOut,
+    ZoneUpdate,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -33,6 +39,7 @@ def _extract_bearer_token(authorization: str | None) -> str | None:
 def require_admin(
     x_admin_token: Annotated[str | None, Header(alias="X-Admin-Token")] = None,
     authorization: Annotated[str | None, Header(alias="Authorization")] = None,
+    x_admin_user: Annotated[str | None, Header(alias="X-Admin-User")] = None,
 ) -> AdminActor:
     if not settings.admin_api_key or settings.admin_api_key == "change-me":
         raise HTTPException(
@@ -47,7 +54,8 @@ def require_admin(
             detail="Invalid admin credentials",
         )
 
-    return AdminActor(actor_id="admin")
+    actor_id = x_admin_user or "admin"
+    return AdminActor(actor_id=actor_id)
 
 
 def _log_audit(
@@ -128,12 +136,6 @@ def update_thresholds(
     db: Session = Depends(get_db),
     actor: AdminActor = Depends(require_admin),
 ):
-    """Update congestion thresholds.
-
-    Note: Threshold changes are persisted to the database and will be loaded
-    at the next processor/API restart. To apply changes immediately to a running
-    system, restart the processor service after updating thresholds.
-    """
     row = (
         db.execute(select(AdminThreshold).order_by(AdminThreshold.id.asc()).limit(1))
         .scalar_one_or_none()
@@ -291,5 +293,6 @@ async def broadcast_notification(
         None,
         message,
     )
+    db.commit()
 
     return {"status": "queued", "recipients": len(manager.operator_active)}
