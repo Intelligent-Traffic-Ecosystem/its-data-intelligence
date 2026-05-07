@@ -43,10 +43,13 @@ def fresh_db(postgres_container):
     import importlib
 
     import shared.config as cfg
+
     importlib.reload(cfg)
     import shared.db as db_mod
+
     importlib.reload(db_mod)
     import shared.models as models_mod
+
     importlib.reload(models_mod)
     models_mod.Base.metadata.create_all(bind=db_mod.engine)
     yield db_mod

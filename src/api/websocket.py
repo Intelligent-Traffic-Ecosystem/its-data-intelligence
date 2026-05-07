@@ -16,15 +16,23 @@ router = APIRouter()
 class ConnectionManager:
     def __init__(self):
         self.active: list[WebSocket] = []
+        self.operator_active: list[WebSocket] = []
 
     async def connect(self, ws: WebSocket):
         await ws.accept()
         self.active.append(ws)
         logger.info("ws_connected total=%d", len(self.active))
 
+    def register_operator(self, ws: WebSocket):
+        if ws not in self.operator_active:
+            self.operator_active.append(ws)
+        logger.info("operator_ws_registered total=%d", len(self.operator_active))
+
     def disconnect(self, ws: WebSocket):
         if ws in self.active:
             self.active.remove(ws)
+        if ws in self.operator_active:
+            self.operator_active.remove(ws)
         logger.info("ws_disconnected remaining=%d", len(self.active))
 
     async def broadcast(self, message: dict) -> None:
@@ -34,6 +42,21 @@ class ConnectionManager:
         payload = json.dumps(message)
         disconnected: list[WebSocket] = []
         for ws in self.active:
+            try:
+                await ws.send_text(payload)
+            except Exception:
+                disconnected.append(ws)
+
+        for ws in disconnected:
+            self.disconnect(ws)
+
+    async def broadcast_to_operators(self, message: dict) -> None:
+        if not self.operator_active:
+            return
+
+        payload = json.dumps(message)
+        disconnected: list[WebSocket] = []
+        for ws in self.operator_active:
             try:
                 await ws.send_text(payload)
             except Exception:
@@ -98,12 +121,18 @@ def _fetch_latest_metrics(camera_filter: str | None = None) -> list[dict]:
 
 
 @router.websocket("/ws/metrics")
-async def websocket_metrics(ws: WebSocket, camera_id: str | None = Query(None)):
+async def websocket_metrics(
+    ws: WebSocket,
+    camera_id: str | None = Query(None),
+    role: str = Query(default="viewer", pattern="^(viewer|operator)$"),
+):
     """Push the latest camera-wide metric every ws_broadcast_interval seconds.
 
     Pass ?camera_id=cam_xx to receive only one camera's stream.
     """
     await manager.connect(ws)
+    if role == "operator":
+        manager.register_operator(ws)
     try:
         while True:
             metrics = _fetch_latest_metrics(camera_filter=camera_id)

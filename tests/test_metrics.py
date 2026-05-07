@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
-from shared.schemas import TrafficEventInput
 from processor.metrics import compute_metrics
+from shared.schemas import TrafficEventInput
 
 
 def _event(**kwargs) -> TrafficEventInput:

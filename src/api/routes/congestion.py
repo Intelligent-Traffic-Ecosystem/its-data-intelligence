@@ -1,7 +1,7 @@
 import json
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import distinct, func, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from shared.db import get_db

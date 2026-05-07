@@ -8,7 +8,9 @@ def normalize(value: float, max_value: float) -> float:
     return min(max(value / max_value, 0.0), 1.0)
 
 
-def classify_congestion(vehicle_count: int, avg_speed_kmh: float, stopped_ratio: float) -> tuple[str, float]:
+def classify_congestion(
+    vehicle_count: int, avg_speed_kmh: float, stopped_ratio: float
+) -> tuple[str, float]:
     """Classify congestion level from aggregated metrics.
 
     Returns (level, score) where level is one of LOW/MODERATE/HIGH/SEVERE

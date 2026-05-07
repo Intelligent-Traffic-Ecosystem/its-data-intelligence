@@ -16,11 +16,13 @@ from datetime import datetime, timezone
 
 from kafka import KafkaProducer
 
-VEHICLE_CLASSES = [ "car", "truck", "bus", "motorcycle", "bicycle"]
+VEHICLE_CLASSES = ["car", "truck", "bus", "motorcycle", "bicycle"]
 CAMERA_IDS = ["cam_{:02d}".format(i) for i in range(1, 21)]
+KAFKA_CONNECT_RETRIES = 10
+KAFKA_CONNECT_DELAY_SECONDS = 2
 
 
-def generate_event(  
+def generate_event(
     camera_id: str,
     vehicle_counter: int,
     with_lane: bool = False,
@@ -77,7 +79,7 @@ def main():
     parser = argparse.ArgumentParser(description="Mock traffic event producer")
     parser.add_argument("--cameras", type=int, default=4, help="Number of cameras to simulate")
     parser.add_argument("--rate", type=float, default=10, help="Events per second (total across cameras)")
-    parser.add_argument("--brokers", type=str, default="localhost:9092", help="Kafka broker(s)")
+    parser.add_argument("--brokers", type=str, default="localhost:29094", help="Kafka broker(s)")
     parser.add_argument("--topic", type=str, default="traffic.events.raw", help="Kafka topic")
     parser.add_argument("--malformed-rate", type=float, default=0.02, help="Fraction of malformed events (0-1)")
     parser.add_argument("--with-lanes", action="store_true", help="Include lane_id on ~80%% of events")
@@ -88,15 +90,26 @@ def main():
     delay = 1.0 / args.rate
 
     print(f"Connecting to Kafka at {args.brokers}...")
-    try:
-        producer = KafkaProducer(
-            bootstrap_servers=args.brokers.split(","),
-            value_serializer=lambda v: v.encode("utf-8") if isinstance(v, str) else json.dumps(v).encode("utf-8"),
-        )
-    except Exception as e:
-        print(f"Failed to connect to Kafka: {e}")
-        print("Make sure Kafka is running: docker compose up kafka zookeeper")
-        sys.exit(1)
+    producer = None
+    last_error = None
+    for attempt in range(1, KAFKA_CONNECT_RETRIES + 1):
+        try:
+            producer = KafkaProducer(
+                bootstrap_servers=args.brokers.split(","),
+                value_serializer=lambda v: v.encode("utf-8") if isinstance(v, str) else json.dumps(v).encode("utf-8"),
+            )
+            break
+        except Exception as e:
+            last_error = e
+            if attempt < KAFKA_CONNECT_RETRIES:
+                print(
+                    f"Kafka not ready yet ({attempt}/{KAFKA_CONNECT_RETRIES}): {e}"
+                )
+                time.sleep(KAFKA_CONNECT_DELAY_SECONDS)
+            else:
+                print(f"Failed to connect to Kafka: {e}")
+                print("Make sure Kafka is running: docker compose up -d")
+                sys.exit(1)
 
     print(f"Producing events to topic '{args.topic}' from {len(cameras)} cameras at {args.rate} events/sec")
     print("Press Ctrl+C to stop\n")
@@ -118,11 +131,7 @@ def main():
                     with_lane=args.with_lanes,
                     include_speed=not args.no_speed,
                 )
-                producer.send(
-                    args.topic,
-                    value=event,
-                    key=camera.encode("utf-8"),
-                )
+                producer.send(args.topic, value=event, key=camera.encode("utf-8"))
                 counter += 1
                 if counter % 50 == 0:
                     print(

@@ -33,7 +33,6 @@ def _extract_bearer_token(authorization: str | None) -> str | None:
 def require_admin(
     x_admin_token: Annotated[str | None, Header(alias="X-Admin-Token")] = None,
     authorization: Annotated[str | None, Header(alias="Authorization")] = None,
-    x_admin_user: Annotated[str | None, Header(alias="X-Admin-User")] = None,
 ) -> AdminActor:
     if not settings.admin_api_key or settings.admin_api_key == "change-me":
         raise HTTPException(
@@ -48,8 +47,7 @@ def require_admin(
             detail="Invalid admin credentials",
         )
 
-    actor_id = x_admin_user or "admin"
-    return AdminActor(actor_id=actor_id)
+    return AdminActor(actor_id="admin")
 
 
 def _log_audit(
@@ -68,7 +66,6 @@ def _log_audit(
         payload=json.dumps(payload) if payload is not None else None,
     )
     db.add(entry)
-    db.commit()
     logger.info(
         "admin_action",
         extra={
@@ -141,9 +138,6 @@ def update_thresholds(
         row.congestion_threshold_moderate = payload.congestion_threshold_moderate
         row.congestion_threshold_high = payload.congestion_threshold_high
 
-    db.commit()
-    db.refresh(row)
-
     _log_audit(
         db,
         actor.actor_id,
@@ -152,6 +146,8 @@ def update_thresholds(
         str(row.id),
         payload.model_dump(),
     )
+    db.commit()
+    db.refresh(row)
 
     return Thresholds(
         congestion_threshold_low=row.congestion_threshold_low,
@@ -189,8 +185,6 @@ def create_zone(
         polygon_wgs84=json.dumps(coordinates),
     )
     db.add(zone)
-    db.commit()
-    db.refresh(zone)
 
     _log_audit(
         db,
@@ -200,6 +194,8 @@ def create_zone(
         str(zone.id),
         {"name": payload.name},
     )
+    db.commit()
+    db.refresh(zone)
 
     return _zone_to_out(zone)
 
@@ -222,8 +218,6 @@ def update_zone(
     zone.name = payload.name
     zone.description = payload.description
     zone.polygon_wgs84 = json.dumps(coordinates)
-    db.commit()
-    db.refresh(zone)
 
     _log_audit(
         db,
@@ -233,6 +227,8 @@ def update_zone(
         str(zone.id),
         {"name": payload.name},
     )
+    db.commit()
+    db.refresh(zone)
 
     return _zone_to_out(zone)
 
@@ -248,7 +244,6 @@ def delete_zone(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Zone not found")
 
     db.delete(zone)
-    db.commit()
 
     _log_audit(
         db,
@@ -258,6 +253,7 @@ def delete_zone(
         str(zone.id),
         {"name": zone.name},
     )
+    db.commit()
 
 
 @router.post("/notifications/broadcast", status_code=status.HTTP_202_ACCEPTED)
@@ -273,7 +269,7 @@ async def broadcast_notification(
         "message": payload.message,
     }
 
-    await manager.broadcast(message)
+    await manager.broadcast_to_operators(message)
 
     _log_audit(
         db,
@@ -284,4 +280,4 @@ async def broadcast_notification(
         message,
     )
 
-    return {"status": "queued", "recipients": len(manager.active)}
+    return {"status": "queued", "recipients": len(manager.operator_active)}

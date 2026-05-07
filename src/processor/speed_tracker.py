@@ -26,9 +26,7 @@ class SpeedTracker:
     ) -> None:
         self.ttl_seconds = ttl_seconds or settings.speed_tracker_ttl_seconds
         self.pixel_to_meter = (
-            pixel_to_meter
-            if pixel_to_meter is not None
-            else settings.speed_tracker_pixel_to_meter
+            pixel_to_meter if pixel_to_meter is not None else settings.speed_tracker_pixel_to_meter
         )
         # vehicle_id -> (centroid_x, centroid_y, last_ts)
         self._last: dict[str, tuple[int, int, datetime]] = {}

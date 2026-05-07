@@ -11,6 +11,9 @@ class Settings(BaseSettings):
 
     # Stream Processor
     window_size_seconds: int = 5
+    window_allowed_lateness_seconds: int = 1
+    flink_parallelism: int = 1
+    flink_checkpoint_interval_ms: int = 30000
 
     # Congestion weights
     congestion_weight_count: float = 0.4

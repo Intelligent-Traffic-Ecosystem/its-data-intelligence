@@ -9,7 +9,10 @@ client = TestClient(app)
 
 def test_health_endpoint():
     """Health endpoint should respond even if Kafka is unavailable."""
-    with patch("api.routes.health._check_kafka", return_value="ok"):
+    with patch("api.routes.health._check_kafka", return_value="ok"), \
+         patch("api.routes.health.SessionLocal") as mock_session:
+        mock_db = mock_session.return_value
+        mock_db.execute.return_value = None
         response = client.get("/health")
     assert response.status_code == 200
     data = response.json()

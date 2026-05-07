@@ -3,25 +3,23 @@ services:
   kafka:
     image: soldevelo/kafka
     ports:
-      - "9092:9092"
+      - "29094:29092"
     environment:
       KAFKA_CFG_NODE_ID: 1
       KAFKA_CFG_PROCESS_ROLES: broker,controller
-      KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29094
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
-      KAFKA_CFG_INITIAL_CONTROLLERS: 1@kafka:9093
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_CFG_CLUSTER_ID: "b2-local-dev-cluster-001"
-      KAFKA_CLUSTER_ID: "b2-local-dev-cluster-001"
 
   postgres:
     image: postgres:16
     ports:
-      - "5432:5432"
+      - "5434:5432"
     environment:
       POSTGRES_DB: traffic
       POSTGRES_USER: user
@@ -30,17 +28,39 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   # --- B2 Services ---
-  b2-stream-processor:
+  jobmanager:
     build:
       context: .
       dockerfile: docker/Dockerfile.processor
+    command: standalone-job --python /app/processor/main.py
+    ports:
+      - "8082:8081"
+      - "9100:9100"
     depends_on:
       - kafka
       - postgres
-    ports:
-      - "9100:9100"
     environment:
-      KAFKA_BROKERS: kafka:29092
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: jobmanager
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_TOPIC_INPUT: traffic.events.raw
+      POSTGRES_URL: postgresql://user:pass@postgres:5432/traffic
+    restart: on-failure
+
+  taskmanager:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.processor
+    command: taskmanager
+    depends_on:
+      - jobmanager
+      - kafka
+      - postgres
+    environment:
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2
+      KAFKA_BROKERS: kafka:9092
       KAFKA_TOPIC_INPUT: traffic.events.raw
       POSTGRES_URL: postgresql://user:pass@postgres:5432/traffic
     restart: on-failure
@@ -52,15 +72,12 @@ services:
     depends_on:
       - postgres
     ports:
-      - "8000:8000"
+      - "18001:8000"
     environment:
-      KAFKA_BROKERS: kafka:29092
+      KAFKA_BROKERS: kafka:9092
       POSTGRES_URL: postgresql://user:pass@postgres:5432/traffic
       ADMIN_API_KEY: my-secret-123
     restart: on-failure
 
 volumes:
   pgdata:
-#is docker-compose file defines and orchestrates Kafka, PostgreSQL, the stream processor, and the FastAPI 
-#service for the B2 traffic analytics system
-#It runs the entire traffic data pipeline using Docker services.
