@@ -9,7 +9,7 @@ from api.prometheus import (
     REQUEST_LATENCY,
 )
 from api.prometheus import router as prom_router
-from api.routes import admin, cameras, congestion, health, metrics
+from api.routes import admin, alerts, cameras, congestion, health, metrics
 from api.websocket import router as ws_router
 from shared.db import engine
 from shared.logging_setup import configure_logging
@@ -59,3 +59,4 @@ app.include_router(health.router, tags=["health"])
 app.include_router(admin.router)
 app.include_router(ws_router)
 app.include_router(prom_router)
+app.include_router(alerts.router, tags=["alerts"])

@@ -106,3 +106,34 @@ class BroadcastNotification(BaseModel):
     message: str = Field(min_length=1, max_length=1000)
     severity: str = Field(default="info", pattern="^(info|warning|critical)$")
     title: str | None = Field(default=None, max_length=200)
+
+
+class AlertOutput(BaseModel):
+    alert_id: str
+    camera_id: str
+    road_segment: str | None = None
+    lane_id: int | None = None
+    alert_type: str
+    severity: str
+    message: str
+    window_start: datetime
+    window_end: datetime
+    congestion_level: str
+    congestion_score: float
+    vehicle_count: int
+    avg_speed_kmh: float
+    queue_length: int
+    acknowledged: bool = False
+    acknowledged_by: str | None = None
+    acknowledged_at: datetime | None = None
+
+
+class AlertAcknowledgeRequest(BaseModel):
+    admin_id: str
+
+
+class AlertAcknowledgeResponse(BaseModel):
+    alert_id: str
+    admin_id: str
+    acknowledged_at: datetime
+    status: str
