@@ -59,3 +59,17 @@ class HealthResponse(BaseModel):
     status: str
     kafka: str
     postgres: str
+
+class AlertOutput(BaseModel):
+    camera_id: str
+    lane_id: int | None = None
+    alert_type: str
+    severity: str
+    message: str
+    window_start: datetime
+    window_end: datetime
+    congestion_level: str
+    congestion_score: float
+    vehicle_count: int
+    avg_speed_kmh: float
+    queue_length: int
