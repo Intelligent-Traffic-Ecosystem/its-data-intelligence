@@ -1,12 +1,7 @@
 """Centroid-based speed fallback.
 
-When B1 omits ``speed_estimate``, B2 estimates it from inter-frame centroid
-displacement of the same ``vehicle_id``. This is intentionally simple:
-distance = sqrt(dx^2 + dy^2) * pixel_to_meter; speed = distance / dt * 3.6.
-
-The pixel-to-meter calibration is global today (per-camera calibration is
-flagged as open question #1 in the plan and can be layered in later via a
-``CAMERA_CALIBRATIONS`` env var).
+The pixel-to-meter calibration can be configured per camera using the
+CAMERA_CALIBRATIONS env var, falling back to speed_tracker_pixel_to_meter.
 """
 
 from __future__ import annotations
@@ -23,10 +18,14 @@ class SpeedTracker:
         self,
         ttl_seconds: int | None = None,
         pixel_to_meter: float | None = None,
+        camera_calibrations: dict[str, float] | None = None,
     ) -> None:
         self.ttl_seconds = ttl_seconds or settings.speed_tracker_ttl_seconds
         self.pixel_to_meter = (
             pixel_to_meter if pixel_to_meter is not None else settings.speed_tracker_pixel_to_meter
+        )
+        self.camera_calibrations = (
+            camera_calibrations if camera_calibrations is not None else settings.camera_calibrations
         )
         # vehicle_id -> (centroid_x, centroid_y, last_ts)
         self._last: dict[str, tuple[int, int, datetime]] = {}
@@ -50,7 +49,8 @@ class SpeedTracker:
             return None
 
         distance_pixels = math.hypot(cx - px, cy - py)
-        distance_m = distance_pixels * self.pixel_to_meter
+        pixel_to_meter = self.camera_calibrations.get(event.camera_id, self.pixel_to_meter)
+        distance_m = distance_pixels * pixel_to_meter
         return (distance_m / dt) * 3.6
 
     def evict_stale(self, now: datetime | None = None) -> int:

@@ -1,3 +1,6 @@
+import json
+
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -37,6 +40,16 @@ class Settings(BaseSettings):
     # Speed fallback (centroid-based)
     speed_tracker_ttl_seconds: int = 30
     speed_tracker_pixel_to_meter: float = 0.05
+    camera_calibrations: dict[str, float] = Field(default_factory=dict)
+
+    @field_validator("camera_calibrations", mode="before")
+    @classmethod
+    def parse_camera_calibrations(cls, value):
+        if value in (None, ""):
+            return {}
+        if isinstance(value, str):
+            return json.loads(value)
+        return value
 
     # Raw event batched writer
     raw_writer_batch_size: int = 200
