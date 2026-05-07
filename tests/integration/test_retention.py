@@ -68,7 +68,8 @@ def test_sweep_deletes_old_rows(fresh_db, tmp_path):
     assert any("camera_id=cam_R" in str(path) for path in archive_files)
     assert any("date=" in str(path) for path in archive_files)
 
-    table = pq.ParquetFile(archive_files[0]).read()
+    cam_r_file = next(path for path in archive_files if "camera_id=cam_R" in str(path))
+    table = pq.ParquetFile(cam_r_file).read()
     archived = table.to_pylist()
 
     assert len(archived) >= 1

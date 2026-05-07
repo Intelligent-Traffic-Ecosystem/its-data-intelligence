@@ -121,10 +121,6 @@ def sweep(
             archived_count = _archive_metrics(old_metrics, metrics_archive_path)
             logger.info("metrics_archived rows=%d path=%s", archived_count, metrics_archive_path)
 
-        if should_archive:
-            archived_count = _archive_metrics(old_metrics, metrics_archive_path)
-            logger.info("metrics_archived rows=%d path=%s", archived_count, metrics_archive_path)
-
         ev_result = session.execute(
             text("DELETE FROM traffic_events WHERE ts < :cutoff"),
             {"cutoff": events_cutoff},
