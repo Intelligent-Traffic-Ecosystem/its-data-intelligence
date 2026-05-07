@@ -24,18 +24,18 @@ logger = logging.getLogger(__name__)
 
 def _metric_row_to_dict(row: Any) -> dict[str, Any]:
     return {
-        "id": row.id,
-        "camera_id": row.camera_id,
-        "window_start": row.window_start,
-        "window_end": row.window_end,
-        "lane_id": row.lane_id,
-        "vehicle_count": row.vehicle_count,
-        "counts_by_class": row.counts_by_class,
-        "avg_speed_kmh": row.avg_speed_kmh,
-        "stopped_ratio": row.stopped_ratio,
-        "queue_length": row.queue_length,
-        "congestion_level": row.congestion_level,
-        "congestion_score": row.congestion_score,
+        "id": row["id"],
+        "camera_id": row["camera_id"],
+        "window_start": row["window_start"],
+        "window_end": row["window_end"],
+        "lane_id": row["lane_id"],
+        "vehicle_count": row["vehicle_count"],
+        "counts_by_class": row["counts_by_class"],
+        "avg_speed_kmh": row["avg_speed_kmh"],
+        "stopped_ratio": row["stopped_ratio"],
+        "queue_length": row["queue_length"],
+        "congestion_level": row["congestion_level"],
+        "congestion_score": row["congestion_score"],
     }
 
 
@@ -50,8 +50,12 @@ def _archive_metrics(rows: list[Any], archive_path: str) -> int:
     grouped: dict[tuple[str, str], list[dict[str, Any]]] = {}
 
     for row in rows:
-        date_part = row.window_start.date().isoformat()
-        key = (row.camera_id, date_part)
+        window_start = row["window_start"]
+        if isinstance(window_start, str):
+            window_start = datetime.fromisoformat(window_start)
+
+        date_part = window_start.date().isoformat()
+        key = (row["camera_id"], date_part)
         grouped.setdefault(key, []).append(_metric_row_to_dict(row))
 
     root = Path(archive_path)
@@ -83,9 +87,7 @@ def sweep(
     events_hours = events_retention_hours or settings.retention_events_hours
     metrics_days = metrics_retention_days or settings.retention_metrics_days
     should_archive = (
-        settings.metrics_archive_enabled
-        if archive_enabled is None
-        else archive_enabled
+        settings.metrics_archive_enabled if archive_enabled is None else archive_enabled
     )
     metrics_archive_path = archive_path or settings.metrics_archive_path
 
@@ -95,10 +97,9 @@ def sweep(
         events_cutoff = now - timedelta(hours=events_hours)
         metrics_cutoff = now - timedelta(days=metrics_days)
 
-        old_metrics = (
-            session.execute(
-                text(
-                    """
+        old_metrics = session.execute(
+            text(
+                """
                     SELECT id, camera_id, window_start, window_end, lane_id,
                            vehicle_count, counts_by_class, avg_speed_kmh,
                            stopped_ratio, queue_length, congestion_level,
@@ -107,12 +108,9 @@ def sweep(
                     WHERE window_start < :cutoff
                     ORDER BY camera_id, window_start
                     """
-                ),
-                {"cutoff": metrics_cutoff},
-            )
-            .mappings()
-            .all()
-        )
+            ),
+            {"cutoff": metrics_cutoff},
+        ).all()
 
         if should_archive:
             archived_count = _archive_metrics(old_metrics, metrics_archive_path)

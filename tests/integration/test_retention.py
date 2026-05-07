@@ -54,7 +54,9 @@ def test_sweep_deletes_old_rows(fresh_db, tmp_path):
     finally:
         session.close()
 
-    events_deleted, metrics_deleted = sweep(SessionLocal, archive_path=str(tmp_path))
+    events_deleted, metrics_deleted = sweep(
+        SessionLocal, archive_enabled=True, archive_path=str(tmp_path)
+    )
     assert events_deleted >= 1
     assert metrics_deleted >= 1
 
