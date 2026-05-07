@@ -76,7 +76,7 @@ def _fetch_latest_metrics(camera_filter: str | None = None) -> list[dict]:
     """
     db = SessionLocal()
     try:
-        latest = (#camerawde dataonly not lane breakdowns
+        latest = (
             select(
                 TrafficMetric.camera_id,
                 func.max(TrafficMetric.window_start).label("max_ws"),
@@ -120,6 +120,59 @@ def _fetch_latest_metrics(camera_filter: str | None = None) -> list[dict]:
         db.close()
 
 
+def _fetch_latest_lane_metrics(camera_filter: str | None = None) -> list[dict]:
+    """Query the latest per-lane metric per camera/lane (lane_id IS NOT NULL).
+
+    If ``camera_filter`` is set, restrict to that one camera.
+    """
+    db = SessionLocal()
+    try:
+        latest = (
+            select(
+                TrafficMetric.camera_id,
+                TrafficMetric.lane_id,
+                func.max(TrafficMetric.window_start).label("max_ws"),
+            )
+            .where(TrafficMetric.lane_id.is_not(None))
+            .group_by(TrafficMetric.camera_id, TrafficMetric.lane_id)
+            .subquery()
+        )
+
+        stmt = (
+            select(TrafficMetric)
+            .join(
+                latest,
+                (TrafficMetric.camera_id == latest.c.camera_id)
+                & (TrafficMetric.lane_id == latest.c.lane_id)
+                & (TrafficMetric.window_start == latest.c.max_ws),
+            )
+            .where(TrafficMetric.lane_id.is_not(None))
+        )
+        if camera_filter:
+            stmt = stmt.where(TrafficMetric.camera_id == camera_filter)
+
+        rows = db.execute(stmt).scalars().all()
+
+        return [
+            {
+                "camera_id": row.camera_id,
+                "window_start": row.window_start.isoformat(),
+                "window_end": row.window_end.isoformat(),
+                "lane_id": row.lane_id,
+                "vehicle_count": row.vehicle_count or 0,
+                "counts_by_class": json.loads(row.counts_by_class) if row.counts_by_class else {},
+                "avg_speed_kmh": row.avg_speed_kmh or 0.0,
+                "stopped_ratio": row.stopped_ratio or 0.0,
+                "queue_length": row.queue_length or 0,
+                "congestion_level": row.congestion_level or "LOW",
+                "congestion_score": row.congestion_score or 0.0,
+            }
+            for row in rows
+        ]
+    finally:
+        db.close()
+
+
 @router.websocket("/ws/metrics")
 async def websocket_metrics(
     ws: WebSocket,
@@ -136,6 +189,29 @@ async def websocket_metrics(
     try:
         while True:
             metrics = _fetch_latest_metrics(camera_filter=camera_id)
+            if metrics:
+                await ws.send_text(json.dumps(metrics))
+            await asyncio.sleep(settings.ws_broadcast_interval)
+    except WebSocketDisconnect:
+        manager.disconnect(ws)
+
+
+@router.websocket("/ws/metrics/lanes")
+async def websocket_lane_metrics(
+    ws: WebSocket,
+    camera_id: str | None = Query(None),
+    role: str = Query(default="viewer", pattern="^(viewer|operator)$"),
+):
+    """Push the latest per-lane metric every ws_broadcast_interval seconds.
+
+    Pass ?camera_id=cam_xx to receive only one camera's stream.
+    """
+    await manager.connect(ws)
+    if role == "operator":
+        manager.register_operator(ws)
+    try:
+        while True:
+            metrics = _fetch_latest_lane_metrics(camera_filter=camera_id)
             if metrics:
                 await ws.send_text(json.dumps(metrics))
             await asyncio.sleep(settings.ws_broadcast_interval)
