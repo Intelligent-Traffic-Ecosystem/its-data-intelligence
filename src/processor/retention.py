@@ -22,22 +22,24 @@ from shared.config import settings
 
 logger = logging.getLogger(__name__)
 
+METRIC_ARCHIVE_COLUMNS = [
+    "id",
+    "camera_id",
+    "window_start",
+    "window_end",
+    "lane_id",
+    "vehicle_count",
+    "counts_by_class",
+    "avg_speed_kmh",
+    "stopped_ratio",
+    "queue_length",
+    "congestion_level",
+    "congestion_score",
+]
+
 
 def _metric_row_to_dict(row: Any) -> dict[str, Any]:
-    return {
-        "id": row["id"],
-        "camera_id": row["camera_id"],
-        "window_start": row["window_start"],
-        "window_end": row["window_end"],
-        "lane_id": row["lane_id"],
-        "vehicle_count": row["vehicle_count"],
-        "counts_by_class": row["counts_by_class"],
-        "avg_speed_kmh": row["avg_speed_kmh"],
-        "stopped_ratio": row["stopped_ratio"],
-        "queue_length": row["queue_length"],
-        "congestion_level": row["congestion_level"],
-        "congestion_score": row["congestion_score"],
-    }
+    return {column: row[column] for column in METRIC_ARCHIVE_COLUMNS}
 
 
 def _archive_metrics(rows: list[Any], archive_path: str) -> int:
@@ -100,14 +102,12 @@ def sweep(
         metrics_cutoff = now - timedelta(days=metrics_days)
 
         if should_archive:
+            columns_sql = ", ".join(METRIC_ARCHIVE_COLUMNS)
             old_metrics = (
                 session.execute(
                     text(
-                        """
-                        SELECT id, camera_id, window_start, window_end, lane_id,
-                            vehicle_count, counts_by_class, avg_speed_kmh,
-                            stopped_ratio, queue_length, congestion_level,
-                            congestion_score
+                        f"""
+                        SELECT {columns_sql}
                         FROM traffic_metrics
                         WHERE window_start < :cutoff
                         ORDER BY camera_id, window_start

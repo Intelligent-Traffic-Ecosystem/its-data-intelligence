@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 import pyarrow.parquet as pq
 
 
-def test_sweep_deletes_old_rows(fresh_db, tmp_path):
+def test_sweep_archives_and_deletes_old_rows(fresh_db, tmp_path):
     from sqlalchemy import insert, select
 
     from processor.retention import sweep
