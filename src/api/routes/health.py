@@ -8,9 +8,9 @@ from shared.db import SessionLocal
 from shared.schemas import HealthResponse
 
 logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter()#API endpoint container
 
-_kafka_admin = None
+_kafka_admin = None#Kafka connection cache #every request connect
 
 
 def _check_kafka() -> str:

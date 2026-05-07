@@ -1,5 +1,5 @@
 # B2 — Data & Intelligence
-
+#its-data-intelligence
 Stream processing and analytics API for the Intelligent Traffic System.
 
 ## Architecture
@@ -47,7 +47,7 @@ A step-by-step walkthrough that exercises every capability the team built. Run f
 ```bash
 cp .env.example .env
 docker compose up -d
-docker compose ps                            
+docker compose ps
 docker compose exec b2-stream-processor alembic upgrade head
 ```
 
@@ -149,6 +149,9 @@ websocat ws://localhost:18001/ws/metrics
 
 # single camera
 websocat 'ws://localhost:18001/ws/metrics?camera_id=cam_01'
+
+# per-lane breakdowns for one camera
+websocat 'ws://localhost:18001/ws/metrics/lanes?camera_id=cam_01'
 ```
 
 ### 11 — Prometheus metrics (two endpoints)
@@ -241,7 +244,8 @@ Per SRS §7, the processor sweeps old rows on a configurable interval
 | GET | `/congestion/current` | Current congestion for all cameras |
 | GET | `/health` | Liveness probe (checks Kafka + Postgres) |
 | GET | `/metrics` | Prometheus scrape endpoint (b2-api on :18001) |
-| WS | `/ws/metrics[?camera_id=X]` | Live metric updates (every 5s); optional camera filter |
+| WS | `/ws/metrics[?camera_id=X]` | Live camera-wide updates (every 5s); optional camera filter |
+| WS | `/ws/metrics/lanes[?camera_id=X]` | Live per-lane updates (every 5s); optional camera filter |
 
 The processor exposes its own Prometheus endpoint on port `9100`:
 `b2_events_processed_total`, `b2_events_dropped_total{reason}`,

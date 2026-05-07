@@ -21,7 +21,7 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
+def upgrade():#agan new features addng
     op.add_column("traffic_metrics", sa.Column("lane_id", sa.Integer))
 
     bind = op.get_bind()
@@ -29,7 +29,7 @@ def upgrade():
         op.drop_constraint("uq_metrics_camera_window", "traffic_metrics", type_="unique")
         op.execute(
             "CREATE UNIQUE INDEX uq_metrics_camera_lane_window "
-            "ON traffic_metrics (camera_id, COALESCE(lane_id, -1), window_start)"
+            "ON traffic_metrics (camera_id, COALESCE(lane_id, -1), window_start)"#lane_id NULL
         )
     else:
         op.drop_constraint("uq_metrics_camera_window", "traffic_metrics", type_="unique")
@@ -40,7 +40,7 @@ def upgrade():
         )
 
 
-def downgrade():
+def downgrade():#Downgrade (rollback) go to old version 
     bind = op.get_bind()
     if bind.dialect.name == "postgresql":
         op.execute("DROP INDEX IF EXISTS uq_metrics_camera_lane_window")

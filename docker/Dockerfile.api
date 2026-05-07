@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Python deps
 COPY requirements/base.txt requirements/base.txt
 COPY requirements/api.txt requirements/api.txt
-RUN pip install --no-cache-dir -r requirements/api.txt
+RUN pip install --no-cache-dir -r requirements/api.txt \
+    && pip install --no-cache-dir "kafka-python>=2.0,<3"
 
 # Copy source code
 COPY src/shared/ /app/shared/
