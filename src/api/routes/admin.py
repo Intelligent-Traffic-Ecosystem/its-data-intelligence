@@ -101,7 +101,10 @@ def get_thresholds(
     db: Session = Depends(get_db),
     _: AdminActor = Depends(require_admin),
 ):
-    row = db.execute(select(AdminThreshold).limit(1)).scalar_one_or_none()
+    row = (
+        db.execute(select(AdminThreshold).order_by(AdminThreshold.id.asc()).limit(1))
+        .scalar_one_or_none()
+    )
     if row is None:
         row = AdminThreshold(
             congestion_threshold_low=settings.congestion_threshold_low,
@@ -125,7 +128,10 @@ def update_thresholds(
     db: Session = Depends(get_db),
     actor: AdminActor = Depends(require_admin),
 ):
-    row = db.execute(select(AdminThreshold).limit(1)).scalar_one_or_none()
+    row = (
+        db.execute(select(AdminThreshold).order_by(AdminThreshold.id.asc()).limit(1))
+        .scalar_one_or_none()
+    )
     if row is None:
         row = AdminThreshold(
             congestion_threshold_low=payload.congestion_threshold_low,

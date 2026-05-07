@@ -33,3 +33,18 @@ def test_high_congestion():
 def test_moderate_congestion():
     level, score = classify_congestion(vehicle_count=20, avg_speed_kmh=30, stopped_ratio=0.2)
     assert level in ("LOW", "MODERATE")
+
+
+def test_thresholds_can_come_from_database(monkeypatch):
+    monkeypatch.setattr(
+        "processor.congestion._load_thresholds",
+        lambda: (0.1, 0.2, 0.3),
+    )
+
+    level, _ = classify_congestion(
+        vehicle_count=20,
+        avg_speed_kmh=30,
+        stopped_ratio=0.2,
+    )
+
+    assert level in {"HIGH", "SEVERE"}

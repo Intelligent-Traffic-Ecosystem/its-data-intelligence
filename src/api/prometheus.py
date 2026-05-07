@@ -1,20 +1,20 @@
 from fastapi import APIRouter, Response
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 router = APIRouter()
 
-# Define Prometheus metrics
-REQUEST_COUNT = Counter(#count total AP request
+# Define Prometheus metrics.
+REQUEST_COUNT = Counter(
     "b2_api_requests_total",
     "Total API requests",
     ["method", "endpoint", "status"],
 )
-REQUEST_LATENCY = Histogram(#measure tme toget for request
+REQUEST_LATENCY = Histogram(
     "b2_api_request_latency_seconds",
     "API request latency",
     ["endpoint"],
 )
-PROCESSING_ERRORS = Counter(#count systemerrors
+PROCESSING_ERRORS = Counter(
     "b2_processing_errors_total",
     "Total processing errors",
     ["type"],
