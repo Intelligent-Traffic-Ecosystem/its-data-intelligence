@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from shared.models import Base
+
 # ---------------------------------------------------------------------------
 # In-memory SQLite engine – used for all unit tests that touch the DB
 # ---------------------------------------------------------------------------
