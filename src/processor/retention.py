@@ -97,9 +97,10 @@ def sweep(
         events_cutoff = now - timedelta(hours=events_hours)
         metrics_cutoff = now - timedelta(days=metrics_days)
 
-        old_metrics = session.execute(
-            text(
-                """
+        old_metrics = (
+            session.execute(
+                text(
+                    """
                     SELECT id, camera_id, window_start, window_end, lane_id,
                            vehicle_count, counts_by_class, avg_speed_kmh,
                            stopped_ratio, queue_length, congestion_level,
@@ -108,9 +109,12 @@ def sweep(
                     WHERE window_start < :cutoff
                     ORDER BY camera_id, window_start
                     """
-            ),
-            {"cutoff": metrics_cutoff},
-        ).all()
+                ),
+                {"cutoff": metrics_cutoff},
+            )
+            .mappings()
+            .all()
+        )
 
         if should_archive:
             archived_count = _archive_metrics(old_metrics, metrics_archive_path)
