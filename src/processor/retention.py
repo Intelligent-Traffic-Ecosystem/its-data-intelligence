@@ -11,6 +11,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -61,7 +62,8 @@ def _archive_metrics(rows: list[Any], archive_path: str) -> int:
     root = Path(archive_path)
 
     for (camera_id, date_part), records in grouped.items():
-        partition_dir = root / f"camera_id={camera_id}" / f"date={date_part}"
+        safe_camera_id = quote(str(camera_id), safe="")
+        partition_dir = root / f"camera_id={safe_camera_id}" / f"date={date_part}"
         partition_dir.mkdir(parents=True, exist_ok=True)
 
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
@@ -97,24 +99,27 @@ def sweep(
         events_cutoff = now - timedelta(hours=events_hours)
         metrics_cutoff = now - timedelta(days=metrics_days)
 
-        old_metrics = (
-            session.execute(
-                text(
-                    """
-                    SELECT id, camera_id, window_start, window_end, lane_id,
-                           vehicle_count, counts_by_class, avg_speed_kmh,
-                           stopped_ratio, queue_length, congestion_level,
-                           congestion_score
-                    FROM traffic_metrics
-                    WHERE window_start < :cutoff
-                    ORDER BY camera_id, window_start
-                    """
-                ),
-                {"cutoff": metrics_cutoff},
+        if should_archive:
+            old_metrics = (
+                session.execute(
+                    text(
+                        """
+                        SELECT id, camera_id, window_start, window_end, lane_id,
+                            vehicle_count, counts_by_class, avg_speed_kmh,
+                            stopped_ratio, queue_length, congestion_level,
+                            congestion_score
+                        FROM traffic_metrics
+                        WHERE window_start < :cutoff
+                        ORDER BY camera_id, window_start
+                        """
+                    ),
+                    {"cutoff": metrics_cutoff},
+                )
+                .mappings()
+                .all()
             )
-            .mappings()
-            .all()
-        )
+            archived_count = _archive_metrics(old_metrics, metrics_archive_path)
+            logger.info("metrics_archived rows=%d path=%s", archived_count, metrics_archive_path)
 
         if should_archive:
             archived_count = _archive_metrics(old_metrics, metrics_archive_path)

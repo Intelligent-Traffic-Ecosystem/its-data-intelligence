@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
+import pyarrow.parquet as pq
+
 
 def test_sweep_deletes_old_rows(fresh_db, tmp_path):
     from sqlalchemy import insert, select
@@ -62,6 +64,16 @@ def test_sweep_deletes_old_rows(fresh_db, tmp_path):
 
     archive_files = list(tmp_path.rglob("*.parquet"))
     assert archive_files
+
+    assert any("camera_id=cam_R" in str(path) for path in archive_files)
+    assert any("date=" in str(path) for path in archive_files)
+
+    table = pq.ParquetFile(archive_files[0]).read()
+    archived = table.to_pylist()
+
+    assert len(archived) >= 1
+    assert archived[0]["camera_id"] == "cam_R"
+    assert archived[0]["congestion_level"] == "LOW"
 
     session = SessionLocal()
     try:
