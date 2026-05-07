@@ -23,7 +23,7 @@ def get_current_congestion(db: Session = Depends(get_db)):
         .group_by(TrafficMetric.camera_id)
         .subquery()
     )
-    
+
     stmt = select(TrafficMetric).join(
         latest,
         (TrafficMetric.camera_id == latest.c.camera_id)

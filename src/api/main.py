@@ -39,7 +39,7 @@ app = FastAPI(
 
 @app.middleware("http")
 async def prometheus_middleware(request: Request, call_next):
-    start = time.perf_counter()
+    start = time.perf_counter()  #start time
     endpoint = request.url.path
     try:
         response = await call_next(request)
@@ -60,8 +60,8 @@ app.include_router(cameras.router, tags=["cameras"])
 app.include_router(metrics.router, tags=["metrics"])
 app.include_router(congestion.router, tags=["congestion"])
 app.include_router(health.router, tags=["health"])
+app.include_router(alerts.router, tags=["alerts"])
 app.include_router(analytics.router, tags=["analytics"])
-app.include_router(admin.router)
+app.include_router(admin.router, tags=["admin"])
 app.include_router(ws_router)
 app.include_router(prom_router)
-app.include_router(alerts.router, tags=["alerts"])

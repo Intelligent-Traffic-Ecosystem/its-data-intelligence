@@ -1,6 +1,20 @@
 from shared.config import settings
 
 
+def _load_thresholds() -> tuple[float, float, float]:
+    """Load current congestion thresholds.
+
+    This indirection exists so tests (and future dynamic reloading) can swap the
+    source of thresholds (e.g., database-backed values) without changing the
+    classification logic.
+    """
+    return (
+        settings.congestion_threshold_low,
+        settings.congestion_threshold_moderate,
+        settings.congestion_threshold_high,
+    )
+
+
 def normalize(value: float, max_value: float) -> float:
     """Clamp value to [0, 1] based on max_value."""
     if max_value <= 0:
@@ -24,11 +38,13 @@ def classify_congestion(
 
     score = min(max(score, 0.0), 1.0)
 
-    if score < settings.congestion_threshold_low:
+    low, moderate, high = _load_thresholds()
+
+    if score < low:
         level = "LOW"
-    elif score < settings.congestion_threshold_moderate:
+    elif score < moderate:
         level = "MODERATE"
-    elif score < settings.congestion_threshold_high:
+    elif score < high:
         level = "HIGH"
     else:
         level = "SEVERE"

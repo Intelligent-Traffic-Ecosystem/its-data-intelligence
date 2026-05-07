@@ -3,7 +3,7 @@ from io import BytesIO
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy import case, cast, extract, func, Integer, select
+from sqlalchemy import Integer, case, cast, extract, func, select
 from sqlalchemy.orm import Session
 
 from shared.db import get_db
@@ -112,11 +112,11 @@ def _build_simple_pdf(title: str, lines: list[str]) -> bytes:
     buffer.write(b"0000000000 65535 f \n")
     for offset in offsets[1:]:
         buffer.write(f"{offset:010d} 00000 n \n".encode("ascii"))
-    buffer.write(
-        f"trailer << /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref_start}\n%%EOF".encode(
-            "ascii"
-        )
+    trailer = (
+        f"trailer << /Size {len(objects) + 1} /Root 1 0 R >>\n"
+        f"startxref\n{xref_start}\n%%EOF"
     )
+    buffer.write(trailer.encode("ascii"))
     return buffer.getvalue()
 
 
