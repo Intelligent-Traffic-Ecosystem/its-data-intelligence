@@ -48,7 +48,22 @@ class Settings(BaseSettings):
         if value in (None, ""):
             return {}
         if isinstance(value, str):
-            return json.loads(value)
+            try:
+                parsed_value = json.loads(value)
+            except json.JSONDecodeError as exc:
+                raise ValueError(
+                    "Invalid CAMERA_CALIBRATIONS / camera_calibrations: must be valid JSON"
+                ) from exc
+            if not isinstance(parsed_value, dict):
+                raise ValueError(
+                    "Invalid CAMERA_CALIBRATIONS / camera_calibrations: must be a JSON object"
+                )
+            try:
+                return {str(key): float(value) for key, value in parsed_value.items()}
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "Invalid CAMERA_CALIBRATIONS / camera_calibrations: values must be numeric"
+                ) from exc
         return value
 
     # Raw event batched writer
