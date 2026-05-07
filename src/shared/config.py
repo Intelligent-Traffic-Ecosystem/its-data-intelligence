@@ -59,6 +59,8 @@ class Settings(BaseSettings):
     retention_events_hours: int = 24
     retention_metrics_days: int = 30
     retention_sweep_interval_seconds: int = 3600
+    metrics_archive_enabled: bool = True
+    metrics_archive_path: str = "archives/traffic_metrics"
 
     # Processor Prometheus port
     processor_metrics_port: int = 9100

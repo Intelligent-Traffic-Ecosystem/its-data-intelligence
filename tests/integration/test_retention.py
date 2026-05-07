@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 
-def test_sweep_deletes_old_rows(fresh_db):
+def test_sweep_deletes_old_rows(fresh_db, tmp_path):
     from sqlalchemy import insert, select
 
     from processor.retention import sweep
@@ -54,9 +54,12 @@ def test_sweep_deletes_old_rows(fresh_db):
     finally:
         session.close()
 
-    events_deleted, metrics_deleted = sweep(SessionLocal)
+    events_deleted, metrics_deleted = sweep(SessionLocal, archive_path=str(tmp_path))
     assert events_deleted >= 1
     assert metrics_deleted >= 1
+
+    archive_files = list(tmp_path.rglob("*.parquet"))
+    assert archive_files
 
     session = SessionLocal()
     try:
