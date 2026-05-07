@@ -60,6 +60,7 @@ class HealthResponse(BaseModel):
     kafka: str
     postgres: str
 
+
 class AlertOutput(BaseModel):
     alert_id: str
     camera_id: str

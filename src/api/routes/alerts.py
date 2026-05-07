@@ -2,7 +2,7 @@ import csv
 import io
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -64,9 +64,11 @@ def _metric_to_alert(
 def _ack_map(db: Session, alert_ids: list[str]) -> dict[str, AlertAcknowledgement]:
     if not alert_ids:
         return {}
-    rows = db.execute(
-        select(AlertAcknowledgement).where(AlertAcknowledgement.alert_id.in_(alert_ids))
-    ).scalars().all()
+    rows = (
+        db.execute(select(AlertAcknowledgement).where(AlertAcknowledgement.alert_id.in_(alert_ids)))
+        .scalars()
+        .all()
+    )
     return {row.alert_id: row for row in rows}
 
 
@@ -117,15 +119,19 @@ def get_current_alerts(db: Session = Depends(get_db)):
         .subquery()
     )
 
-    rows = db.execute(
-        select(TrafficMetric)
-        .join(
-            latest,
-            (TrafficMetric.camera_id == latest.c.camera_id)
-            & (TrafficMetric.window_start == latest.c.max_ws),
+    rows = (
+        db.execute(
+            select(TrafficMetric)
+            .join(
+                latest,
+                (TrafficMetric.camera_id == latest.c.camera_id)
+                & (TrafficMetric.window_start == latest.c.max_ws),
+            )
+            .where(TrafficMetric.lane_id.is_(None))
         )
-        .where(TrafficMetric.lane_id.is_(None))
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     ids = [_alert_id(row) for row in rows]
     acks = _ack_map(db, ids)
