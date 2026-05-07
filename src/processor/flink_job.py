@@ -50,7 +50,7 @@ class ValidateAndTrackSpeed(FlatMapFunction):
 
 class EventTimestampAssigner(TimestampAssigner):
     def extract_timestamp(self, value, record_timestamp):
-        ts = value.get('timestamp')
+        ts = value.get("timestamp")
         if isinstance(ts, str):
             ts = datetime.fromisoformat(ts.replace("Z", "+00:00"))
         if ts is None:
@@ -138,15 +138,15 @@ class MetricSink(MapFunction):
 
 def build_pipeline(env: StreamExecutionEnvironment):
     kafka_props = {
-        'bootstrap.servers': settings.kafka_brokers,
-        'group.id': 'b2-stream-processor-flink',
-        'auto.offset.reset': 'latest'
+        "bootstrap.servers": settings.kafka_brokers,
+        "group.id": "b2-stream-processor-flink",
+        "auto.offset.reset": "latest",
     }
 
     kafka_consumer = FlinkKafkaConsumer(
         topics=settings.kafka_topic_input,
         deserialization_schema=SimpleStringSchema(),
-        properties=kafka_props
+        properties=kafka_props,
     )
 
     # 1. Source
@@ -164,9 +164,8 @@ def build_pipeline(env: StreamExecutionEnvironment):
     ).with_timestamp_assigner(EventTimestampAssigner())
 
     windowed_metrics = (
-        events
-        .assign_timestamps_and_watermarks(watermark_strategy)
-        .key_by(lambda e: e['camera_id'])
+        events.assign_timestamps_and_watermarks(watermark_strategy)
+        .key_by(lambda e: e["camera_id"])
         .window(TumblingEventTimeWindows.of(Time.seconds(settings.window_size_seconds)))
         .allowed_lateness(settings.window_allowed_lateness_seconds * 1000)
         .process(AggregateMetricsFunction())

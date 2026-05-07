@@ -1,4 +1,9 @@
+import json
+
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
+
+ERROR_PREFIX = "Invalid CAMERA_CALIBRATIONS / camera_calibrations:"
 
 
 class Settings(BaseSettings):
@@ -40,6 +45,38 @@ class Settings(BaseSettings):
     # Speed fallback (centroid-based)
     speed_tracker_ttl_seconds: int = 30
     speed_tracker_pixel_to_meter: float = 0.05
+    camera_calibrations: dict[str, float] = Field(default_factory=dict)
+
+    @field_validator("camera_calibrations", mode="before")
+    @classmethod
+    def parse_camera_calibrations(cls, value):
+        if value in (None, ""):
+            return {}
+
+        parsed_value = value
+
+        if isinstance(value, str):
+            try:
+                parsed_value = json.loads(value)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"{ERROR_PREFIX} must be valid JSON") from exc
+
+        if not isinstance(parsed_value, dict):
+            raise ValueError(f"{ERROR_PREFIX} must be a JSON object")
+
+        normalized = {}
+
+        try:
+            for key, raw_value in parsed_value.items():
+                if isinstance(raw_value, bool):
+                    raise ValueError(f"{ERROR_PREFIX} values must be numeric")
+
+                normalized[str(key)] = float(raw_value)
+
+            return normalized
+
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{ERROR_PREFIX} values must be numeric") from exc
 
     # Raw event batched writer
     raw_writer_batch_size: int = 200
@@ -49,6 +86,8 @@ class Settings(BaseSettings):
     retention_events_hours: int = 24
     retention_metrics_days: int = 30
     retention_sweep_interval_seconds: int = 3600
+    metrics_archive_enabled: bool = False
+    metrics_archive_path: str = "/tmp/its-data-intelligence/traffic_metrics"
 
     # Processor Prometheus port
     processor_metrics_port: int = 9100

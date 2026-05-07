@@ -6,6 +6,7 @@ import sys
 os.environ["POSTGRES_URL"] = "postgresql://user:pass@127.0.0.1:5432/traffic"
 
 import pytest
+
 # Add src/ to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 

@@ -10,10 +10,6 @@ from api.prometheus import (
 )
 from api.prometheus import router as prom_router
 from api.routes import admin, alerts, cameras, congestion, health, metrics
-from api.prometheus import (
-    router as prom_router,
-)
-from api.routes import alerts, cameras, congestion, health, metrics
 from api.websocket import router as ws_router
 from shared.db import engine
 from shared.logging_setup import configure_logging
@@ -45,9 +41,7 @@ async def prometheus_middleware(request: Request, call_next):
         response = await call_next(request)
     except Exception:
         PROCESSING_ERRORS.labels(type="api_unhandled").inc()
-        REQUEST_COUNT.labels(
-            method=request.method, endpoint=endpoint, status="500"
-        ).inc()
+        REQUEST_COUNT.labels(method=request.method, endpoint=endpoint, status="500").inc()
         raise
     REQUEST_LATENCY.labels(endpoint=endpoint).observe(time.perf_counter() - start)
     REQUEST_COUNT.labels(
