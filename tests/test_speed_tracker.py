@@ -1,5 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
+import pytest
+
 from processor.speed_tracker import SpeedTracker
 from shared.schemas import BBox, Centroid, TrafficEventInput
 
@@ -28,7 +30,7 @@ def test_speed_tracker_uses_camera_specific_calibration():
 
     speed = tracker.estimate(_event("cam_01", "veh_1", start + timedelta(seconds=1), 10, 0))
 
-    assert speed == 3.6
+    assert speed == pytest.approx(3.6)
 
 
 def test_speed_tracker_falls_back_to_default_calibration():
@@ -42,4 +44,4 @@ def test_speed_tracker_falls_back_to_default_calibration():
 
     speed = tracker.estimate(_event("cam_02", "veh_1", start + timedelta(seconds=1), 10, 0))
 
-    assert speed == 1.8
+    assert speed == pytest.approx(1.8)
