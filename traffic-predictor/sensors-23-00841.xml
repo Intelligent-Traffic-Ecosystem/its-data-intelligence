@@ -1,0 +1,2063 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Publishing DTD v1.3 20210610//EN" "JATS-journalpublishing1-3.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" dtd-version="1.3" xml:lang="en">
+  <front>
+    <journal-meta>
+      <journal-id journal-id-type="publisher-id">sensors</journal-id>
+      <journal-title-group>
+        <journal-title>Sensors</journal-title>
+        <abbrev-journal-title abbrev-type="publisher">Sensors</abbrev-journal-title>
+        <abbrev-journal-title abbrev-type="pubmed">Sensors</abbrev-journal-title>
+      </journal-title-group>
+      <issn pub-type="epub">1424-8220</issn>
+      <publisher>
+        <publisher-name>MDPI</publisher-name>
+      </publisher>
+    </journal-meta>
+    <article-meta>
+      <article-id pub-id-type="doi">10.3390/s23020841</article-id>
+      <article-id pub-id-type="publisher-id">sensors-23-00841</article-id>
+      <article-categories>
+        <subj-group>
+          <subject>Article</subject>
+        </subj-group>
+      </article-categories>
+      <title-group>
+        <article-title>MD-GCN: A Multi-Scale Temporal Dual Graph Convolution Network for Traffic Flow Prediction</article-title>
+      </title-group>
+      <contrib-group>
+        <contrib contrib-type="author">
+          <name>
+            <surname>Huang</surname>
+            <given-names>Xiaohui</given-names>
+          </name>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Writing &#x2013; review &amp; editing" vocab-term-identifier="https://credit.niso.org/contributor-roles/writing-review-editing/">Writing &#x2013; review &amp; editing</role>
+        </contrib>
+        <contrib contrib-type="author">
+          <name>
+            <surname>Wang</surname>
+            <given-names>Junyang</given-names>
+          </name>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Writing &#x2013; original draft" vocab-term-identifier="https://credit.niso.org/contributor-roles/writing-original-draft/">Writing &#x2013; original draft</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Writing &#x2013; review &amp; editing" vocab-term-identifier="https://credit.niso.org/contributor-roles/writing-review-editing/">Writing &#x2013; review &amp; editing</role>
+          <xref rid="c1-sensors-23-00841" ref-type="corresp">*</xref>
+        </contrib>
+        <contrib contrib-type="author">
+          <name>
+            <surname>Lan</surname>
+            <given-names>Yuanchun</given-names>
+          </name>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Writing &#x2013; review &amp; editing" vocab-term-identifier="https://credit.niso.org/contributor-roles/writing-review-editing/">Writing &#x2013; review &amp; editing</role>
+        </contrib>
+        <contrib contrib-type="author">
+          <name>
+            <surname>Jiang</surname>
+            <given-names>Chaojie</given-names>
+          </name>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Writing &#x2013; review &amp; editing" vocab-term-identifier="https://credit.niso.org/contributor-roles/writing-review-editing/">Writing &#x2013; review &amp; editing</role>
+        </contrib>
+        <contrib contrib-type="author">
+          <name>
+            <surname>Yuan</surname>
+            <given-names>Xinhua</given-names>
+          </name>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Writing &#x2013; review &amp; editing" vocab-term-identifier="https://credit.niso.org/contributor-roles/writing-review-editing/">Writing &#x2013; review &amp; editing</role>
+        </contrib>
+      </contrib-group>
+      <contrib-group>
+        <contrib contrib-type="editor">
+          <name>
+            <surname>Ruiz</surname>
+            <given-names>Javier Alonso</given-names>
+          </name>
+          <role>Academic Editor</role>
+        </contrib>
+        <contrib contrib-type="editor">
+          <name>
+            <surname>Llamazares</surname>
+            <given-names>Angel</given-names>
+          </name>
+          <role>Academic Editor</role>
+        </contrib>
+      </contrib-group>
+      <aff id="af1-sensors-23-00841">Department of Information Engineering, East China Jiaotong University, Nanchang 330000, China</aff>
+      <author-notes>
+        <corresp id="c1-sensors-23-00841"><label>*</label>Correspondence: <email>wjunyang416@foxmail.com</email></corresp>
+      </author-notes>
+      <pub-date pub-type="epub">
+        <day>11</day>
+        <month>01</month>
+        <year>2023</year>
+      </pub-date>
+      <pub-date pub-type="collection">
+        <month>01</month>
+        <year>2023</year>
+      </pub-date>
+      <volume>23</volume>
+      <issue>2</issue>
+      <elocation-id>841</elocation-id>
+      <history>
+        <date date-type="received">
+          <day>22</day>
+          <month>11</month>
+          <year>2022</year>
+        </date>
+        <date date-type="rev-recd">
+          <day>05</day>
+          <month>01</month>
+          <year>2023</year>
+        </date>
+        <date date-type="accepted">
+          <day>10</day>
+          <month>01</month>
+          <year>2023</year>
+        </date>
+      </history>
+      <permissions>
+        <copyright-statement>&#xA9; 2023 by the authors.</copyright-statement>
+        <copyright-year>2023</copyright-year>
+        <license license-type="open-access">
+          <license-p>Licensee MDPI, Basel, Switzerland. This article is an open access article distributed under the terms and conditions of the Creative Commons Attribution (CC BY) license (<ext-link ext-link-type="uri" xlink:href="https://creativecommons.org/licenses/by/4.0/">https://creativecommons.org/licenses/by/4.0/</ext-link>).</license-p>
+        </license>
+      </permissions>
+      <abstract>
+        <p>The spatial&#x2013;temporal prediction of traffic flow is very important for traffic management and planning. The most difficult challenges of traffic flow prediction are the temporal feature extraction and the spatial correlation extraction of nodes. Due to the complex spatial correlation between different roads and the dynamic trend of time patterns, traditional forecasting methods still have limitations in obtaining spatial&#x2013;temporal correlation, which makes it difficult to extract more valid information. In order to improve the accuracy of the forecasting, this paper proposes a multi-scale temporal dual graph convolution network for traffic flow prediction (MD-GCN). Firstly, we propose a gated temporal convolution based on a channel attention and inception structure to extract multi-scale temporal dependence. Then, aiming at the complexity of the traffic spatial structure, we develop a dual graph convolution module including the graph sampling and aggregation submodule (GraphSAGE) and the mix-hop propagation graph convolution submodule (MGCN) to extract the local correlation and global correlation between neighbor nodes. Finally, extensive experiments are carried out on several public traffic datasets, and the experimental results show that our proposed algorithm outperforms the existing methods.</p>
+      </abstract>
+      <kwd-group>
+        <kwd>traffic flow forecasting</kwd>
+        <kwd>spatial&#x2013;temporal correlation</kwd>
+        <kwd>graph convolution</kwd>
+        <kwd>temporal convolution</kwd>
+      </kwd-group>
+      <funding-group>
+        <award-group>
+          <funding-source>National Natural Science Foundation of China</funding-source>
+          <award-id>62062033</award-id>
+        </award-group>
+        <funding-statement>This research was funded by the National Natural Science Foundation of China (No.62062033).</funding-statement>
+      </funding-group>
+    </article-meta>
+  </front>
+  <body>
+    <sec sec-type="intro" id="sec1-sensors-23-00841">
+      <title>1. Introduction</title>
+      <p>With the rapid increase in the number of vehicles in cities, the rational planning of urban transportation has become an important challenge. Intelligent transportation systems (ITS), as a vital intelligent traffic management system in intelligent cities, can provide new solutions to urban road traffic problems. In this paper, we study one of the most representative spatial&#x2013;temporal forecastings, traffic flow forecasting. Traffic flow is a part of the intelligent transportation system (ITS) [<xref ref-type="bibr" rid="B1-sensors-23-00841">1</xref>] and refers to some traffic flow states on the road composed of pedestrians, running vehicles, roads, etc. Traffic flow forecasting uses historical traffic flow data observed by sensors to predict the future [<xref ref-type="bibr" rid="B2-sensors-23-00841">2</xref>], which can help people avoid congestion during the journey and choose convenient and safe routes. However, roads in the traffic network have a complex spatial structure. <xref ref-type="fig" rid="sensors-23-00841-f001">Figure 1</xref> shows a typical traffic system, where traffic sensors are configured at important locations in the road to record traffic flow data. According to <xref ref-type="fig" rid="sensors-23-00841-f001">Figure 1</xref>a, we observe the vehicles beside sensor 2 (green arrow) mainly come from two parts: the first part is the vehicles from the residential area (yellow arrow) adjacent to sensor 2; the second part of flow comes from the two areas: industrial and agricultural vehicles (red arrows), which are relatively far away from sensor 2. The traffic flow within the same road network may change over time, which proves that the spatial dependency is dynamic. An example is shown in <xref ref-type="fig" rid="sensors-23-00841-f001">Figure 1</xref>b; the traffic flow at sensors 3 and 4 can significantly affect the flow of sensor 2 at 8 a.m. and 9 a.m., while there is only a small influence at 12 a.m. and sensor 1 is the opposite of them. We assign different weights to the numbers between the nodes based on the spatial correlation between sensor 2 and its neighbors, and the higher the value, the greater the correlation. Therefore, the spatial and temporal problems caused by these complex traffic structures may bring great challenges to traffic flow prediction.</p>
+      <p>At present, the problem of traffic flow prediction based on spatio-temporal data has attracted extensive attention from researchers [<xref ref-type="bibr" rid="B3-sensors-23-00841">3</xref>,<xref ref-type="bibr" rid="B4-sensors-23-00841">4</xref>,<xref ref-type="bibr" rid="B5-sensors-23-00841">5</xref>]. In the past few decades, scholars have proposed many methods for predicting traffic flow [<xref ref-type="bibr" rid="B6-sensors-23-00841">6</xref>], which includes traditional forecasting models based on statistical methods and predictive models based on machine learning. Among them, the representative one in the traditional prediction model is autoregressive integrated moving average (ARIMA) [<xref ref-type="bibr" rid="B7-sensors-23-00841">7</xref>]. However, with the development of society and technology and the capabilities of these models being limited by the stationarity assumption of time series, traditional shallow neural network models are not performing well in the face of increasingly complex transportation networks and huge traffic data volume, and they are usually only applicable to the traffic prediction of a single station. In the face of spatial&#x2013;temporal data, they cannot extract spatial&#x2013;temporal correlations well.</p>
+      <p>At the same time, deep learning has made great breakthroughs in the field of traffic flow prediction [<xref ref-type="bibr" rid="B8-sensors-23-00841">8</xref>,<xref ref-type="bibr" rid="B9-sensors-23-00841">9</xref>]. For example, convolution neural networks (CNNs) are used to capture the spatial correlation of transportation networks, and recurrent neural networks (RNNs) are used to capture temporal correlations. However, traditional CNNs are often applied to handle the regular grid Euclidean data, and modeling irregular road networks will lose topological information of the traffic network. Graph convolution networks (GCNs) can be used to replace CNNs to better handle non-Euclidean data in traffic road networks [<xref ref-type="bibr" rid="B10-sensors-23-00841">10</xref>,<xref ref-type="bibr" rid="B11-sensors-23-00841">11</xref>,<xref ref-type="bibr" rid="B12-sensors-23-00841">12</xref>]. However, there are still some problems in the graph convolution-based methods. For example, with the deepening of network layers, the graph convolution network will be degraded, and the node information in a longer range cannot be extracted, which leads to the degradation of the prediction performance. The traffic flow often changes periodically, and the traffic flow is also affected by the previous moments. Recurrent neural networks (RNNs) will usually experience time-consuming iterative propagation and gradient bursts when capturing remote time series and often ignore spatial correlations [<xref ref-type="bibr" rid="B13-sensors-23-00841">13</xref>].</p>
+      <p>To address these challenges, we propose a multi-scale temporal dual graph convolution network (MD-GCN). First, we use kernels of different sizes on the temporal convolution module, which can complement the multi-scale temporal dependence and avoid the problem of gradient bursts. After the output of temporal convolution, we use the gating mechanism to filter unnecessary information. From the spatial perspective, as the traffic network becomes more and more complex, the change of traffic flow is obviously affected by its topology, and the traffic flow data between adjacent roads and between roads with a longer range are obviously closely related. However, in previous studies [<xref ref-type="bibr" rid="B14-sensors-23-00841">14</xref>,<xref ref-type="bibr" rid="B15-sensors-23-00841">15</xref>,<xref ref-type="bibr" rid="B16-sensors-23-00841">16</xref>], researchers usually use only one graph convolutional network to build a model and often fail to extract node information in a larger range. In this work, we propose a dual graph convolutiom to extract information at different spatial ranges as well as hidden spatial dependencies between nodes. The main contributions of this paper include the following:<list list-type="bullet"><list-item><p>We propose a dual graph convolution framework with graph sampling and aggregation (GraphSAGE) and mix-hop propagation graph convolution (MGCN) to capture spatial information. By fusing the neighbor nodes information extracted with these two methods, the capability of capturing spatial relations can be further improved.</p></list-item><list-item><p>We propose a multi-scale temporal convolution with a gated mechanism as a temporal block, in which the temporal correlation of traffic data at different scales is extracted using convolution kernels of different sizes, and the obtained features are fused and adjusted by an efficient pyramid split attention module (EPSA).</p></list-item><list-item><p>These experimental results conducted on four public datasets show that our proposed algorithm outperforms the existing methods.</p></list-item></list></p>
+      <p>The subsequent work of this paper is organized as follows: <xref ref-type="sec" rid="sec2-sensors-23-00841">Section 2</xref> reiviews the works related to traffic prediction. <xref ref-type="sec" rid="sec3-sensors-23-00841">Section 3</xref> introduces the definition of traffic network and problem definition. The framework of the MD-GCN model and the detailed work flow are placed in <xref ref-type="sec" rid="sec3-sensors-23-00841">Section 3</xref>. <xref ref-type="sec" rid="sec5-sensors-23-00841">Section 5</xref> verifies the effectiveness of the model through various experiments. Finally, the conclusion and future works are placed in <xref ref-type="sec" rid="sec6-sensors-23-00841">Section 6</xref>.</p>
+    </sec>
+    <sec id="sec2-sensors-23-00841">
+      <title>2. Related Work</title>
+      <p>Traffic flow forecasting has long been regarded as an important part of ITS to help alleviate unexpected rising traffic flow, and traffic flow forecasting is a classic time series forecasting task. Compared with the traditional time series and machine learning models, deep learning-based models [<xref ref-type="bibr" rid="B12-sensors-23-00841">12</xref>], e.g., Long Short-Term Memory (LSTM) [<xref ref-type="bibr" rid="B17-sensors-23-00841">17</xref>] and Gate Recurrent Unit (GRU) [<xref ref-type="bibr" rid="B18-sensors-23-00841">18</xref>], show good performance in capturing the temporal correlation of traffic flow data. Meanwhile, the researchers [<xref ref-type="bibr" rid="B19-sensors-23-00841">19</xref>] used convolution neural networks and graph neural networks to model spatial correlations. In this section, we summarize the previous traffic flow prediction methods, which mainly include the following two aspects: graph convolution neural network-based models and temporal convolution network-based models [<xref ref-type="bibr" rid="B20-sensors-23-00841">20</xref>].</p>
+      <sec id="sec2dot1-sensors-23-00841">
+        <title>2.1. Traffic Prediction Based on Graph Convolution Networks</title>
+        <p>In recent years, deep learning models have been widely used in traffic flow prediction [<xref ref-type="bibr" rid="B21-sensors-23-00841">21</xref>], which mainly includes convolution neural networks (CNNs) and a graph convolution network. In the past, researchers have often used traditional convolution neural networks to model spatial correlations [<xref ref-type="bibr" rid="B22-sensors-23-00841">22</xref>,<xref ref-type="bibr" rid="B23-sensors-23-00841">23</xref>]. Howerver, due to the complex topology of traffic networks, the results produced by CNN-based methods are usually not satisfactory. Graph convolution neural networks (GCNs) can do well in handling irregular data by integrating the information of neighbor nodes.</p>
+        <p>Zhao et al. [<xref ref-type="bibr" rid="B24-sensors-23-00841">24</xref>] proposed a novel neural network-based traffic forecasting method, the temporal graph convolutional network (T-GCN) model, which is combined with the graph convolutional network (GCN) and the gated recurrent unit (GRU). Li et al. [<xref ref-type="bibr" rid="B25-sensors-23-00841">25</xref>] modeled the traffic flow as a diffusion process on a directed graph and introduced a Diffusion Convolutional Recurrent Neural Network (DCRNN) which is able to incorporate both spatial and temporal dependency in the traffic flow prediction. Dai et al. [<xref ref-type="bibr" rid="B26-sensors-23-00841">26</xref>] proposed the Hybrid Spatio-Temporal Graph Convolutional Network (H-STGCN), which is able to &#x201C;deduce&#x201D; future travel time by exploiting the data of upcoming traffic volume. Lu et al. [<xref ref-type="bibr" rid="B27-sensors-23-00841">27</xref>] proposed a spatial&#x2013;temporal adaptive gated graph convolution network (STAG-GCN) that uses the global context information of roads and spatial&#x2013;temporal correlation of urban traffic flow to construct a dynamic weighted graph by seeking both spatial neighbors and semantic neighbors of road nodes. Song et al. [<xref ref-type="bibr" rid="B28-sensors-23-00841">28</xref>] propose a novel model, named Spatial&#x2013;Temporal Synchronous Graph Convolutional Networks (STSGCN), for spatial&#x2013;temporal network data forecasting. The model is able to effectively capture the complex localized spatial&#x2013;temporal correlations through an elaborately designed spatial&#x2013;temporal synchronous modeling mechanism. Bai et al. [<xref ref-type="bibr" rid="B29-sensors-23-00841">29</xref>] proposed two adaptive modules for enhancing Graph Convolutional Network (GCN) with new capabilities: (1) a Node Adaptive Parameter Learning (NAPL) module to capture node-specific patterns; and (2) a Data Adaptive Graph Generation (DAGG) module to infer the inter-dependencies among different traffic series automatically (AGCRN). Chen et al. [<xref ref-type="bibr" rid="B16-sensors-23-00841">16</xref>] proposed the Multi-Range Attentive Bicomponent GCN (MRA-BGCN), which firstly builds the node-wise graph according to the road network distance and the edge-wise graph according to various edge interaction patterns. Guo et al. [<xref ref-type="bibr" rid="B30-sensors-23-00841">30</xref>] proposed a novel attention based spatial&#x2013;temporal graph convolutional network (ASTGCN) model to solve the traffic flow forecasting problem, which mainly consists of the spatial&#x2013;temporal attention mechanism and the spatial&#x2013;temporal convolution. Guo et al. [<xref ref-type="bibr" rid="B31-sensors-23-00841">31</xref>] proposed a novel Hierarchical Graph Convolution Networks (HGCN) for traffic forecasting by operating on both the micro- and macro-traffic graphs. Wu et al. [<xref ref-type="bibr" rid="B15-sensors-23-00841">15</xref>] proposed a novel graph neural network architecture for spatial&#x2013;temporal graph modeling by developing a novel adaptive dependency matrix and learning it through node embedding, which can precisely capture the hidden spatial dependency in the data. Wu et al. [<xref ref-type="bibr" rid="B14-sensors-23-00841">14</xref>] considered the one-way dependency of road and proposed a general graph neural network framework (MTGNN) for multivariate time series data. The model can automatically extract the uni-directed relations among variables through a graph learning module where external knowledge such as variable attributes can be easily integrated.</p>
+        <p>However, the existing graph convolution models only change the ways of constructing the graph and cannot effectively capture the deep spatial information from the perspective of aggregating nodes. In this work, we design the dual graph convolution module with GraphSAGE [<xref ref-type="bibr" rid="B32-sensors-23-00841">32</xref>] and an MGCN module (which use different aggregation methods) to obtain complex feature associations between nodes. In our later experiments, this method is proven to improve the model&#x2019;s ability to capture spatial information.</p>
+      </sec>
+      <sec id="sec2dot2-sensors-23-00841">
+        <title>2.2. Traffic Prediction Based on Temporal Convolution Networks</title>
+        <p>Recurrent neural networks (RNNs) have often been used for time series prediction. However, traditional RNN-based methods are inefficient when training longer sequences, and their gradients are more likely to explode when combined with graph convolution networks. Therefore, researchers [<xref ref-type="bibr" rid="B33-sensors-23-00841">33</xref>,<xref ref-type="bibr" rid="B34-sensors-23-00841">34</xref>,<xref ref-type="bibr" rid="B35-sensors-23-00841">35</xref>] begin to use Temporal Convolution Networks (TCNs) in traffic flow prediction and achieved better results than RNNs. Yu et al. [<xref ref-type="bibr" rid="B33-sensors-23-00841">33</xref>] proposed spatio-temporal graph convolutional networks (STGCN) which prevent the accumulation of errors caused by the iterative training of RNN structures and used temporal convolution networks to extract temporal features on the timeline. In the meantime, Tian et al. [<xref ref-type="bibr" rid="B34-sensors-23-00841">34</xref>] proposed spatial&#x2013;temporal attention wavenet (STAWnet) to handle long time sequences by using TCNs and cature dynamic spatial dependencies between different nodes by using the self-attention network. Li et al. [<xref ref-type="bibr" rid="B35-sensors-23-00841">35</xref>] proposed spatial&#x2013;temporal fusion graph neural networks (STFGNN) to control the input ratio of the original data as the number of network layers increases with the gating mechanism on temporal convolution. However, as the network deepens, the performance of the temporal convolution neural network will deteriorate, since these models cannot extract different ranges of time series information.</p>
+      </sec>
+    </sec>
+    <sec id="sec3-sensors-23-00841">
+      <title>3. Preliminaries</title>
+      <p>In this work, we define the traffic topology as <inline-formula><mml:math id="mm1"><mml:semantics><mml:mrow><mml:mi>G</mml:mi><mml:mo>=</mml:mo><mml:mo>(</mml:mo><mml:mi>V</mml:mi><mml:mo>,</mml:mo><mml:mi>E</mml:mi><mml:mo>,</mml:mo><mml:mi>A</mml:mi><mml:mo>)</mml:mo></mml:mrow></mml:semantics></mml:math></inline-formula>, where <inline-formula><mml:math id="mm2"><mml:semantics><mml:mrow><mml:mi>V</mml:mi><mml:mo>=</mml:mo><mml:mfenced separators="" open="{" close="}"><mml:msub><mml:mi>v</mml:mi><mml:mn>1</mml:mn></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mn>2</mml:mn></mml:msub><mml:mo>&#x22EF;</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mi>n</mml:mi></mml:msub></mml:mfenced></mml:mrow></mml:semantics></mml:math></inline-formula> represents the set of the sensors on the roads, <italic>E</italic> is the set of edges between nodes representing a connection between two nodes (sensors), the adjacency matrix <inline-formula><mml:math id="mm3"><mml:semantics><mml:mrow><mml:mi>A</mml:mi><mml:mo>&#x2208;</mml:mo><mml:msup><mml:mi>R</mml:mi><mml:mrow><mml:mi>n</mml:mi><mml:mo>&#xD7;</mml:mo><mml:mi>n</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:semantics></mml:math></inline-formula> represents the connection relationship between nodes, and <italic>n</italic> is the number of nodes. If there are two nodes <inline-formula><mml:math id="mm4"><mml:semantics><mml:msub><mml:mi>v</mml:mi><mml:mi>i</mml:mi></mml:msub></mml:semantics></mml:math></inline-formula> and <inline-formula><mml:math id="mm5"><mml:semantics><mml:msub><mml:mi>v</mml:mi><mml:mi>j</mml:mi></mml:msub></mml:semantics></mml:math></inline-formula> connecting to each other directly, <inline-formula><mml:math id="mm6"><mml:semantics><mml:msub><mml:mi>A</mml:mi><mml:mrow><mml:mi>i</mml:mi><mml:mi>j</mml:mi></mml:mrow></mml:msub></mml:semantics></mml:math></inline-formula> is set to 1, and it is otherwise set to 0.</p>
+      <p>We define a feature matrix <inline-formula><mml:math id="mm7"><mml:semantics><mml:mrow><mml:msup><mml:mi>X</mml:mi><mml:mi>t</mml:mi></mml:msup><mml:mo>&#x2208;</mml:mo><mml:msup><mml:mi>R</mml:mi><mml:mrow><mml:mi>n</mml:mi><mml:mo>&#xD7;</mml:mo><mml:mi>D</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:semantics></mml:math></inline-formula> to represent the traffic flow at time step <italic>t</italic> for all the nodes <inline-formula><mml:math id="mm8"><mml:semantics><mml:mrow><mml:mi>V</mml:mi><mml:mo>=</mml:mo><mml:mfenced separators="" open="{" close="}"><mml:msub><mml:mi>v</mml:mi><mml:mn>1</mml:mn></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mn>2</mml:mn></mml:msub><mml:mo>&#x22EF;</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mi>n</mml:mi></mml:msub></mml:mfenced></mml:mrow></mml:semantics></mml:math></inline-formula>, where <italic>D</italic> is the number of traffic features. Given a traffic network graph <italic>G</italic> and the histroical traffic flow, the traffic flow prediction can be defined as a mapping function <italic>f</italic>,
+      <disp-formula id="FD1-sensors-23-00841"><label>(1)</label><mml:math id="mm9" display="block"><mml:semantics><mml:mrow><mml:mfenced separators="" open="[" close="]"><mml:msup><mml:mi>X</mml:mi><mml:mfenced separators="" open="(" close=")"><mml:mi>t</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mi>S</mml:mi><mml:mo>:</mml:mo><mml:mi>t</mml:mi></mml:mfenced></mml:msup><mml:mo>,</mml:mo><mml:mi>G</mml:mi></mml:mfenced><mml:mover><mml:mo>&#x2192;</mml:mo><mml:mi>f</mml:mi></mml:mover><mml:msup><mml:mi>X</mml:mi><mml:mfenced separators="" open="(" close=")"><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mn>1</mml:mn><mml:mo>:</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mi>T</mml:mi></mml:mfenced></mml:msup><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula>
+      where <inline-formula><mml:math id="mm10"><mml:semantics><mml:mrow><mml:msup><mml:mi>X</mml:mi><mml:mfenced separators="" open="(" close=")"><mml:mi>t</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mi>S</mml:mi><mml:mo>:</mml:mo><mml:mi>t</mml:mi></mml:mfenced></mml:msup><mml:mo>&#x2208;</mml:mo><mml:msup><mml:mi>R</mml:mi><mml:mrow><mml:mi>n</mml:mi><mml:mo>&#xD7;</mml:mo><mml:mi>D</mml:mi><mml:mo>&#xD7;</mml:mo><mml:mi>S</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:semantics></mml:math></inline-formula> is the historical data of <italic>S</italic> time steps and <inline-formula><mml:math id="mm11"><mml:semantics><mml:mrow><mml:msup><mml:mi>X</mml:mi><mml:mfenced separators="" open="(" close=")"><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mn>1</mml:mn><mml:mo>:</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mi>T</mml:mi></mml:mfenced></mml:msup><mml:mo>&#x2208;</mml:mo><mml:msup><mml:mi>R</mml:mi><mml:mrow><mml:mi>n</mml:mi><mml:mo>&#xD7;</mml:mo><mml:mi>D</mml:mi><mml:mo>&#xD7;</mml:mo><mml:mi>T</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:semantics></mml:math></inline-formula> is the traffic flow of <italic>T</italic> time steps to be predicted.</p>
+    </sec>
+    <sec id="sec4-sensors-23-00841">
+      <title>4. The Framework of MD-GCN</title>
+      <p>The structure of MD-GCN presented in this paper is shown in <xref ref-type="fig" rid="sensors-23-00841-f002">Figure 2</xref>. The model mainly includes <italic>N</italic> spatial&#x2013;temporal blocks and a complete fully connected layer as the output block. In MD-GCN, each spatial&#x2013;temporal block consists of a spatial block and temporal block. The temporal block is mainly a multi-scale gated temporal convolution module and an efficient pyramid split attention module. The spatial block is composed of a graph sampling and aggregation (GraphSAGE) module and mix-hop propagation graph convolution (MGCN) module. The main innovation of this model is that it constructs modules separately to extract spatial correlation and temporal correlation. For the mining of temporal relations, we use a channel-centered multi-resolution gated temporal convolution model to improve time data processing ability. For the mining of complex spatial relationships, we use the spatial information extracted by the GraphSAGE module and MGCN module to enhance the ability to summarize the information of neighbor nodes. The following sections describe the detailed structure of each module.</p>
+      <sec id="sec4dot1-sensors-23-00841">
+        <title>4.1.  Temporal Block</title>
+        <p>Due to the different traffic conditions at different times in the future, the temporal information extracted by using temporal convolution in TCN [<xref ref-type="bibr" rid="B20-sensors-23-00841">20</xref>] is often determined by a fixed convolution kernel. This work introduces the idea of an &#x201C;inception&#x201D; structure, using convolution kernels of different sizes to extract time features in different ranges [<xref ref-type="bibr" rid="B14-sensors-23-00841">14</xref>]. We propose a multi-scale gated temporal convolution module combined with pyramid channel attention to extract temporal feature information. There are three main processes involved. Firstly, multi-scale gated temporal convolution uses two-dimension convolution to extract temporal correlation. Then, we set convolution kernels of different sizes to improve the range of convolution and use a gated mechanism to filter unnecessary information. Finally, the features obtained are fused and adjusted by the efficient pyramid split attention module and by the channel attention mechanism.</p>
+        <sec id="sec4dot1dot1-sensors-23-00841">
+          <title>4.1.1. Multi-Scale Gated Temporal Convolution (MGTCN)</title>
+          <p>In recent years, the temporal convolution model has been widely used in time series analysis. We propose a multi-scale gated temporal convolution module (MGTCN) as shown in <xref ref-type="fig" rid="sensors-23-00841-f003">Figure 3</xref>. MGTCN mainly includes two parallel multi-scale temporal convolution modules (I-TCN) and a gated fusion module. We define <italic>k</italic> as the number of layers of the current temporal convolution module with <inline-formula><mml:math id="mm12"><mml:semantics><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:semantics></mml:math></inline-formula> representing its previous layer. The I-TCN module is a temporal convolution module consisting of four different convolution kernels, and the convolution process is defined as:<disp-formula id="FD2-sensors-23-00841"><label>(2)</label><mml:math id="mm13" display="block"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>U</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>=</mml:mo><mml:mi>C</mml:mi><mml:mi>O</mml:mi><mml:mi>N</mml:mi><mml:mi>C</mml:mi><mml:mi>A</mml:mi><mml:mi>T</mml:mi><mml:mfenced separators="" open="(" close=")"><mml:msubsup><mml:mi>&#x3B8;</mml:mi><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mn>1</mml:mn><mml:mo>&#xD7;</mml:mo><mml:mn>2</mml:mn></mml:mrow></mml:msubsup><mml:mo>&#x2217;</mml:mo><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>,</mml:mo><mml:msubsup><mml:mi>&#x3B8;</mml:mi><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mn>1</mml:mn><mml:mo>&#xD7;</mml:mo><mml:mn>3</mml:mn></mml:mrow></mml:msubsup><mml:mo>&#x2217;</mml:mo><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>,</mml:mo><mml:msubsup><mml:mi>&#x3B8;</mml:mi><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mn>1</mml:mn><mml:mo>&#xD7;</mml:mo><mml:mn>6</mml:mn></mml:mrow></mml:msubsup><mml:mo>&#x2217;</mml:mo><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>,</mml:mo><mml:msubsup><mml:mi>&#x3B8;</mml:mi><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mn>1</mml:mn><mml:mo>&#xD7;</mml:mo><mml:mn>7</mml:mn></mml:mrow></mml:msubsup><mml:mo>&#x2217;</mml:mo><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup></mml:mfenced><mml:mo>.</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula><inline-formula><mml:math id="mm14"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mn>0</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>=</mml:mo><mml:msup><mml:mi>X</mml:mi><mml:mfenced separators="" open="(" close=")"><mml:mi>t</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mi>S</mml:mi><mml:mo>:</mml:mo><mml:mi>t</mml:mi></mml:mfenced></mml:msup></mml:mrow></mml:semantics></mml:math></inline-formula>, <inline-formula><mml:math id="mm15"><mml:semantics><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup></mml:semantics></mml:math></inline-formula> is the output of the <inline-formula><mml:math id="mm16"><mml:semantics><mml:msup><mml:mfenced separators="" open="(" close=")"><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mfenced><mml:mrow><mml:mi>t</mml:mi><mml:mi>h</mml:mi></mml:mrow></mml:msup></mml:semantics></mml:math></inline-formula> layer, in which the four filters are truncated to the same length according to the largest filter and concatenated in the channel dimension. <inline-formula><mml:math id="mm17"><mml:semantics><mml:msubsup><mml:mi>&#x3B8;</mml:mi><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mn>1</mml:mn><mml:mo>&#xD7;</mml:mo><mml:mn>2</mml:mn></mml:mrow></mml:msubsup></mml:semantics></mml:math></inline-formula>, <inline-formula><mml:math id="mm18"><mml:semantics><mml:msubsup><mml:mi>&#x3B8;</mml:mi><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mn>1</mml:mn><mml:mo>&#xD7;</mml:mo><mml:mn>3</mml:mn></mml:mrow></mml:msubsup></mml:semantics></mml:math></inline-formula>, <inline-formula><mml:math id="mm19"><mml:semantics><mml:msubsup><mml:mi>&#x3B8;</mml:mi><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mn>1</mml:mn><mml:mo>&#xD7;</mml:mo><mml:mn>6</mml:mn></mml:mrow></mml:msubsup></mml:semantics></mml:math></inline-formula>, <inline-formula><mml:math id="mm20"><mml:semantics><mml:msubsup><mml:mi>&#x3B8;</mml:mi><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mn>1</mml:mn><mml:mo>&#xD7;</mml:mo><mml:mn>7</mml:mn></mml:mrow></mml:msubsup></mml:semantics></mml:math></inline-formula> is the process of convolution using four different convolution kernels, in which <inline-formula><mml:math id="mm21"><mml:semantics><mml:mrow><mml:mn>1</mml:mn><mml:mo>&#xD7;</mml:mo><mml:mn>2</mml:mn></mml:mrow></mml:semantics></mml:math></inline-formula>, <inline-formula><mml:math id="mm22"><mml:semantics><mml:mrow><mml:mn>1</mml:mn><mml:mo>&#xD7;</mml:mo><mml:mn>3</mml:mn></mml:mrow></mml:semantics></mml:math></inline-formula>, <inline-formula><mml:math id="mm23"><mml:semantics><mml:mrow><mml:mn>1</mml:mn><mml:mo>&#xD7;</mml:mo><mml:mn>6</mml:mn></mml:mrow></mml:semantics></mml:math></inline-formula>, and <inline-formula><mml:math id="mm24"><mml:semantics><mml:mrow><mml:mn>1</mml:mn><mml:mo>&#xD7;</mml:mo><mml:mn>7</mml:mn></mml:mrow></mml:semantics></mml:math></inline-formula>. &#x2217; is convolution operation. <inline-formula><mml:math id="mm25"><mml:semantics><mml:mrow><mml:mi>C</mml:mi><mml:mi>O</mml:mi><mml:mi>N</mml:mi><mml:mi>C</mml:mi><mml:mi>A</mml:mi><mml:mi>T</mml:mi><mml:mo>(</mml:mo><mml:mo>.</mml:mo><mml:mo>)</mml:mo></mml:mrow></mml:semantics></mml:math></inline-formula> is concatenation operation, and the output after convolution is defined as <inline-formula><mml:math id="mm26"><mml:semantics><mml:msubsup><mml:mi>U</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup></mml:semantics></mml:math></inline-formula>. Then, we use a gated mechanism to filter unnecessary temporal information. The formula is defined as:<disp-formula id="FD3-sensors-23-00841"><label>(3)</label><mml:math id="mm27" display="block"><mml:semantics><mml:mrow><mml:mi>g</mml:mi><mml:mi>a</mml:mi><mml:mi>t</mml:mi><mml:mi>e</mml:mi><mml:msubsup><mml:mi>d</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>=</mml:mo><mml:mi>&#x3C3;</mml:mi><mml:mfenced separators="" open="(" close=")"><mml:msubsup><mml:mi>U</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>&#xD7;</mml:mo><mml:msub><mml:mi>M</mml:mi><mml:mi>k</mml:mi></mml:msub><mml:mo>+</mml:mo><mml:msub><mml:mi>b</mml:mi><mml:mi>k</mml:mi></mml:msub></mml:mfenced><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula>
+          <disp-formula id="FD4-sensors-23-00841"><label>(4)</label><mml:math id="mm28" display="block"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>s</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>=</mml:mo><mml:mrow><mml:mo>(</mml:mo><mml:mn>1</mml:mn><mml:mo>&#x2212;</mml:mo><mml:mi>g</mml:mi><mml:mi>a</mml:mi><mml:mi>t</mml:mi><mml:mi>e</mml:mi><mml:msubsup><mml:mi>d</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>)</mml:mo></mml:mrow><mml:mo>&#x2217;</mml:mo><mml:msubsup><mml:mi>U</mml:mi><mml:mrow><mml:mi>k</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>+</mml:mo><mml:mi>g</mml:mi><mml:mi>a</mml:mi><mml:mi>t</mml:mi><mml:mi>e</mml:mi><mml:msubsup><mml:mi>d</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>&#x2297;</mml:mo><mml:mfenced separators="" open="(" close=")"><mml:msubsup><mml:mi>U</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>&#xD7;</mml:mo><mml:msub><mml:mi>V</mml:mi><mml:mi>k</mml:mi></mml:msub><mml:mo>+</mml:mo><mml:msub><mml:mi>c</mml:mi><mml:mi>k</mml:mi></mml:msub></mml:mfenced><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula><inline-formula><mml:math id="mm29"><mml:semantics><mml:msub><mml:mi>M</mml:mi><mml:mi>k</mml:mi></mml:msub></mml:semantics></mml:math></inline-formula>, <inline-formula><mml:math id="mm30"><mml:semantics><mml:msub><mml:mi>V</mml:mi><mml:mi>k</mml:mi></mml:msub></mml:semantics></mml:math></inline-formula>, <inline-formula><mml:math id="mm31"><mml:semantics><mml:msub><mml:mi>b</mml:mi><mml:mi>k</mml:mi></mml:msub></mml:semantics></mml:math></inline-formula>, <inline-formula><mml:math id="mm32"><mml:semantics><mml:msub><mml:mi>c</mml:mi><mml:mi>k</mml:mi></mml:msub></mml:semantics></mml:math></inline-formula> represent the model parameter of the current layer, &#x2297; is the product of elements, and <inline-formula><mml:math id="mm33"><mml:semantics><mml:mrow><mml:mi>g</mml:mi><mml:mi>a</mml:mi><mml:mi>t</mml:mi><mml:mi>e</mml:mi><mml:msubsup><mml:mi>d</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup></mml:mrow></mml:semantics></mml:math></inline-formula> is the gating coefficient obtained by learning. <inline-formula><mml:math id="mm34"><mml:semantics><mml:mrow><mml:mi>&#x3C3;</mml:mi><mml:mo>(</mml:mo><mml:mo>.</mml:mo><mml:mo>)</mml:mo></mml:mrow></mml:semantics></mml:math></inline-formula> is the Sigmoid function that determines the ratio of information passed to the next layer. The output after temporal convolution and the gated mechanism is defined as <inline-formula><mml:math id="mm35"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>s</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>&#x2208;</mml:mo><mml:msup><mml:mi>R</mml:mi><mml:mrow><mml:mi>n</mml:mi><mml:mo>&#xD7;</mml:mo><mml:mi>F</mml:mi><mml:mo>&#xD7;</mml:mo><mml:mi>C</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:semantics></mml:math></inline-formula>, where <italic>F</italic> is the number of time features of the output, and <italic>C</italic> is the number of channels.</p>
+        </sec>
+        <sec id="sec4dot1dot2-sensors-23-00841">
+          <title>4.1.2. Efficient Pyramid Split Attention Module (EPSA)</title>
+          <p>After MGTCN combines different convolutions by splicing, the channel attention module is introduced to capture the correlation between channels. In this work, we use the efficient pyramid split attention module (EPSA) [<xref ref-type="bibr" rid="B32-sensors-23-00841">32</xref>], mainly considering the channel features of different scales on the basis of the previous modules and greatly reducing the complexity of the model on the basis of improving the performance of the deep convolution neural network. First, we focus on the input data <inline-formula><mml:math id="mm36"><mml:semantics><mml:msubsup><mml:mi>s</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup></mml:semantics></mml:math></inline-formula> cut into <italic>g</italic> parts represented as <inline-formula><mml:math id="mm37"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>s</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub></mml:mrow></mml:semantics></mml:math></inline-formula>. The number of channels for each split is <inline-formula><mml:math id="mm38"><mml:semantics><mml:mrow><mml:msup><mml:mi>C</mml:mi><mml:mo>&#x2032;</mml:mo></mml:msup><mml:mo>=</mml:mo><mml:mfrac><mml:mi>C</mml:mi><mml:mi>g</mml:mi></mml:mfrac></mml:mrow></mml:semantics></mml:math></inline-formula>, where <inline-formula><mml:math id="mm39"><mml:semantics><mml:msup><mml:mi>C</mml:mi><mml:mo>&#x2032;</mml:mo></mml:msup></mml:semantics></mml:math></inline-formula> is the number of channels after grouping. Then, we use multi-scale convolution kernels to group convolution, which can reduce the number of parameters. The specific calculation method of multi-scale feature extraction is defined as:<disp-formula id="FD5-sensors-23-00841"><label>(5)</label><mml:math id="mm40" display="block"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>F</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub><mml:mo>=</mml:mo><mml:mo mathvariant="italic">Conv</mml:mo><mml:mfenced separators="" open="(" close=")"><mml:msub><mml:mi>K</mml:mi><mml:mi>q</mml:mi></mml:msub><mml:mo>&#xD7;</mml:mo><mml:msub><mml:mi>K</mml:mi><mml:mi>q</mml:mi></mml:msub></mml:mfenced><mml:mfenced separators="" open="(" close=")"><mml:msubsup><mml:mi>s</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub></mml:mfenced><mml:mo>,</mml:mo><mml:mi>q</mml:mi><mml:mo>=</mml:mo><mml:mn>0</mml:mn><mml:mo>,</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mn>2</mml:mn><mml:mo>&#x2026;</mml:mo><mml:mi>g</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula>
+          <disp-formula id="FD6-sensors-23-00841"><label>(6)</label><mml:math id="mm41" display="block"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>F</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>=</mml:mo><mml:mi>C</mml:mi><mml:mi>O</mml:mi><mml:mi>N</mml:mi><mml:mi>C</mml:mi><mml:mi>A</mml:mi><mml:mi>T</mml:mi><mml:mfenced separators="" open="(" close=")"><mml:mfenced separators="" open="[" close="]"><mml:msubsup><mml:mi>F</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mn>0</mml:mn></mml:msub><mml:mo>,</mml:mo><mml:msubsup><mml:mi>F</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mn>1</mml:mn></mml:msub><mml:mo>,</mml:mo><mml:msubsup><mml:mi>F</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mn>2</mml:mn></mml:msub><mml:mo>,</mml:mo><mml:mo>&#x2026;</mml:mo><mml:msubsup><mml:mi>F</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mrow><mml:mi>g</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msub></mml:mfenced></mml:mfenced><mml:mo>,</mml:mo><mml:msubsup><mml:mi>F</mml:mi><mml:mi>k</mml:mi><mml:mi>t</mml:mi></mml:msubsup><mml:mo>&#x2208;</mml:mo><mml:msup><mml:mi>R</mml:mi><mml:mrow><mml:mi>n</mml:mi><mml:mo>&#xD7;</mml:mo><mml:mi>S</mml:mi><mml:mo>&#xD7;</mml:mo><mml:mi>C</mml:mi></mml:mrow></mml:msup><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula>
+          <disp-formula id="FD7-sensors-23-00841"><label>(7)</label><mml:math id="mm42" display="block"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>Z</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub><mml:mo>=</mml:mo><mml:mi>S</mml:mi><mml:mi>E</mml:mi><mml:mi>W</mml:mi><mml:mi>e</mml:mi><mml:mi>i</mml:mi><mml:mi>g</mml:mi><mml:mi>h</mml:mi><mml:mi>t</mml:mi><mml:mfenced separators="" open="(" close=")"><mml:msubsup><mml:mi>F</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub></mml:mfenced><mml:mo>,</mml:mo><mml:mi>q</mml:mi><mml:mo>=</mml:mo><mml:mn>0</mml:mn><mml:mo>,</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mn>2</mml:mn><mml:mo>,</mml:mo><mml:mo>&#x2026;</mml:mo><mml:mi>g</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:msubsup><mml:mi>Z</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub><mml:mo>&#x2208;</mml:mo><mml:msup><mml:mi>R</mml:mi><mml:mrow><mml:mn>1</mml:mn><mml:mo>&#xD7;</mml:mo><mml:mn>1</mml:mn><mml:mo>&#xD7;</mml:mo><mml:msub><mml:mi>C</mml:mi><mml:mi>q</mml:mi></mml:msub></mml:mrow></mml:msup><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula></p>
+          <p>We adaptively select the size of the group according to the size of the convolution kernel, where the relationship between the group and the convolution kernel is <inline-formula><mml:math id="mm43"><mml:semantics><mml:mrow><mml:msub><mml:mi>K</mml:mi><mml:mi>q</mml:mi></mml:msub><mml:mo>=</mml:mo><mml:mn>2</mml:mn><mml:mo>&#xD7;</mml:mo><mml:mrow><mml:mo>(</mml:mo><mml:mi>q</mml:mi><mml:mo>+</mml:mo><mml:mn>1</mml:mn><mml:mo>)</mml:mo></mml:mrow><mml:mo>+</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:semantics></mml:math></inline-formula>, and <inline-formula><mml:math id="mm44"><mml:semantics><mml:mrow><mml:mi>C</mml:mi><mml:mi>o</mml:mi><mml:mi>n</mml:mi><mml:mi>v</mml:mi><mml:mo>(</mml:mo><mml:mo>.</mml:mo><mml:mo>)</mml:mo></mml:mrow></mml:semantics></mml:math></inline-formula> represents the process of convolution. <inline-formula><mml:math id="mm45"><mml:semantics><mml:msubsup><mml:mi>F</mml:mi><mml:mi>k</mml:mi><mml:mi>t</mml:mi></mml:msubsup></mml:semantics></mml:math></inline-formula> is the output obtained by <italic>g</italic> group convolution splicing. We extract channel attention weights for data at different scales by <inline-formula><mml:math id="mm46"><mml:semantics><mml:mrow><mml:mi>S</mml:mi><mml:mi>E</mml:mi><mml:mi>W</mml:mi><mml:mi>e</mml:mi><mml:mi>i</mml:mi><mml:mi>g</mml:mi><mml:mi>h</mml:mi><mml:mi>t</mml:mi><mml:mo>(</mml:mo><mml:mo>.</mml:mo><mml:mo>)</mml:mo></mml:mrow></mml:semantics></mml:math></inline-formula>, <inline-formula><mml:math id="mm47"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>Z</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub></mml:mrow></mml:semantics></mml:math></inline-formula> is the channel attention weight vector of different scales. In order to establish long-term channel attention dependence and to achieve the interaction between multi-scale channel attention, the Softmax function is used here to process the weight parameters, and the formula is defined as:<disp-formula id="FD8-sensors-23-00841"><label>(8)</label><mml:math id="mm48" display="block"><mml:semantics><mml:mrow><mml:mi>a</mml:mi><mml:mi>t</mml:mi><mml:msubsup><mml:mi>t</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub><mml:mo>=</mml:mo><mml:mi>S</mml:mi><mml:mi>o</mml:mi><mml:mi>f</mml:mi><mml:mi>t</mml:mi><mml:mi>m</mml:mi><mml:mi>a</mml:mi><mml:mi>x</mml:mi><mml:mrow><mml:mo>(</mml:mo><mml:msubsup><mml:mi>Z</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub><mml:mo>)</mml:mo></mml:mrow><mml:mo>=</mml:mo><mml:mfrac><mml:mrow><mml:mi>e</mml:mi><mml:mi>x</mml:mi><mml:mi>p</mml:mi><mml:mfenced separators="" open="(" close=")"><mml:msubsup><mml:mi>Z</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub></mml:mfenced></mml:mrow><mml:mstyle scriptlevel="0" displaystyle="false"><mml:mrow><mml:msubsup><mml:mo>&#x2211;</mml:mo><mml:mrow><mml:mi>q</mml:mi><mml:mo>=</mml:mo><mml:mn>0</mml:mn></mml:mrow><mml:mrow><mml:mi>g</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msubsup><mml:mi>e</mml:mi><mml:mi>x</mml:mi><mml:mi>p</mml:mi><mml:mrow><mml:mo>(</mml:mo><mml:msubsup><mml:mi>Z</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub><mml:mo>)</mml:mo></mml:mrow></mml:mrow></mml:mstyle></mml:mfrac><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula>
+          <disp-formula id="FD9-sensors-23-00841"><label>(9)</label><mml:math id="mm49" display="block"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub><mml:mo>=</mml:mo><mml:msubsup><mml:mi>F</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub><mml:mo>&#x2299;</mml:mo><mml:mi>a</mml:mi><mml:mi>t</mml:mi><mml:msubsup><mml:mi>t</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mn>2</mml:mn><mml:mo>,</mml:mo><mml:mn>3</mml:mn><mml:mo>,</mml:mo><mml:mo>&#x2026;</mml:mo><mml:mi>g</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula>
+          <disp-formula id="FD10-sensors-23-00841"><label>(10)</label><mml:math id="mm50" display="block"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>=</mml:mo><mml:mi>C</mml:mi><mml:mi>O</mml:mi><mml:mi>N</mml:mi><mml:mi>C</mml:mi><mml:mi>A</mml:mi><mml:mi>T</mml:mi><mml:mfenced separators="" open="(" close=")"><mml:mfenced separators="" open="[" close="]"><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mn>0</mml:mn></mml:msub><mml:mo>,</mml:mo><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mn>1</mml:mn></mml:msub><mml:mo>,</mml:mo><mml:mo>&#x2026;</mml:mo><mml:mo>.</mml:mo><mml:mo>,</mml:mo><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mrow><mml:mi>g</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msub></mml:mfenced></mml:mfenced><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula>
+          where &#x2299; is the element-wise product, and <inline-formula><mml:math id="mm51"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub></mml:mrow></mml:semantics></mml:math></inline-formula> is obtained by multiplying the corresponding eigenvectors <inline-formula><mml:math id="mm52"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>F</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub></mml:mrow></mml:semantics></mml:math></inline-formula> and the weighted coefficients <inline-formula><mml:math id="mm53"><mml:semantics><mml:mrow><mml:mi>a</mml:mi><mml:mi>t</mml:mi><mml:msubsup><mml:mi>t</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>q</mml:mi></mml:msub></mml:mrow></mml:semantics></mml:math></inline-formula>. Finally, the weighted feature vectors are spliced to obtain the output of the temporal module at the <inline-formula><mml:math id="mm54"><mml:semantics><mml:msup><mml:mi>k</mml:mi><mml:mrow><mml:mi>t</mml:mi><mml:mi>h</mml:mi></mml:mrow></mml:msup></mml:semantics></mml:math></inline-formula> layer is <inline-formula><mml:math id="mm55"><mml:semantics><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup></mml:semantics></mml:math></inline-formula>.</p>
+        </sec>
+      </sec>
+      <sec id="sec4dot2-sensors-23-00841">
+        <title>4.2. Spatial Block</title>
+        <p>For transportation networks, traffic conditions in adjacent locations influence each other, and the spatial relationship between roads can be captured to predict traffic more accurately. In previous studies, the correlation was usually captured from the global aspect of nodes, and the local correlation of nodes was not fully considered, but transportation networks often contain different dependencies. The spatial module uses the graph sampling and aggregation module and the mix-hop propagation graph convolution module to extract spatial features and hidden spatial dependencies in parallel. The details of the module are defined in the next two sections.</p>
+        <sec id="sec4dot2dot1-sensors-23-00841">
+          <title>4.2.1.  Graph Sampling and Aggregation Module (GraphSAGE)</title>
+          <p>In this section, we use the GraphSAGE module to spatially model the road network. The module generates node embeddings as follows: given a node <inline-formula><mml:math id="mm56"><mml:semantics><mml:mrow><mml:msub><mml:mi>v</mml:mi><mml:mi>i</mml:mi></mml:msub><mml:mo>&#x2208;</mml:mo><mml:mi>V</mml:mi></mml:mrow></mml:semantics></mml:math></inline-formula>, the set of nodes in its immediate domain is <inline-formula><mml:math id="mm57"><mml:semantics><mml:mrow><mml:mi>N</mml:mi><mml:mo>(</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mi>i</mml:mi></mml:msub><mml:mo>)</mml:mo></mml:mrow></mml:semantics></mml:math></inline-formula>. <inline-formula><mml:math id="mm58"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>l</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mrow><mml:mi>N</mml:mi><mml:mo>(</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mi>i</mml:mi></mml:msub><mml:mo>)</mml:mo></mml:mrow></mml:msub></mml:mrow></mml:semantics></mml:math></inline-formula> is the output of the node <inline-formula><mml:math id="mm59"><mml:semantics><mml:msub><mml:mi>v</mml:mi><mml:mi>i</mml:mi></mml:msub></mml:semantics></mml:math></inline-formula> at the <inline-formula><mml:math id="mm60"><mml:semantics><mml:msup><mml:mi>l</mml:mi><mml:mrow><mml:mi>t</mml:mi><mml:mi>h</mml:mi></mml:mrow></mml:msup></mml:semantics></mml:math></inline-formula> layer after aggregating neighbor information. The process of aggregation of all nodes is defined as:<disp-formula id="FD11-sensors-23-00841"><label>(11)</label><mml:math id="mm61" display="block"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>l</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mrow><mml:mi>N</mml:mi><mml:mo>(</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mi>i</mml:mi></mml:msub><mml:mo>)</mml:mo></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mi>A</mml:mi><mml:mi>G</mml:mi><mml:mi>G</mml:mi><mml:mi>R</mml:mi><mml:mi>E</mml:mi><mml:mi>G</mml:mi><mml:mi>A</mml:mi><mml:mi>T</mml:mi><mml:mi>E</mml:mi><mml:mfenced separators="" open="(" close=")"><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>l</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>u</mml:mi></mml:msub><mml:mo>,</mml:mo><mml:mo>&#x2200;</mml:mo><mml:mi>u</mml:mi><mml:mo>&#x2208;</mml:mo><mml:mi>N</mml:mi><mml:mrow><mml:mo>(</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mi>i</mml:mi></mml:msub><mml:mo>)</mml:mo></mml:mrow></mml:mfenced><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula>
+          <disp-formula id="FD12-sensors-23-00841"><label>(12)</label><mml:math id="mm62" display="block"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>l</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mi>i</mml:mi></mml:msub></mml:msub><mml:mo>&#x2190;</mml:mo><mml:mi>&#x3C3;</mml:mi><mml:mfenced separators="" open="(" close=")"><mml:msup><mml:mi>W</mml:mi><mml:mi>l</mml:mi></mml:msup><mml:mo>&#xB7;</mml:mo><mml:mi>M</mml:mi><mml:mi>E</mml:mi><mml:mi>A</mml:mi><mml:mi>N</mml:mi></mml:mfenced><mml:mfenced separators="" open="(" close=")"><mml:mfenced separators="" open="{" close="}"><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>l</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mi>i</mml:mi></mml:msub></mml:msub><mml:mo>&#x222A;</mml:mo><mml:mfenced separators="" open="{" close="}"><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>l</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>u</mml:mi></mml:msub><mml:mo>,</mml:mo><mml:mo>&#x2200;</mml:mo><mml:mi>u</mml:mi><mml:mo>&#x2208;</mml:mo><mml:mi>N</mml:mi><mml:mrow><mml:mo>(</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mi>i</mml:mi></mml:msub><mml:mo>)</mml:mo></mml:mrow></mml:mfenced></mml:mfenced></mml:mfenced><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula>
+          <disp-formula id="FD13-sensors-23-00841"><label>(13)</label><mml:math id="mm63" display="block"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>l</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>V</mml:mi></mml:msub><mml:mo>=</mml:mo><mml:mi>C</mml:mi><mml:mi>O</mml:mi><mml:mi>N</mml:mi><mml:mi>C</mml:mi><mml:mi>A</mml:mi><mml:mi>T</mml:mi><mml:mfenced separators="" open="(" close=")"><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>l</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mn>1</mml:mn></mml:msub></mml:msub><mml:mo>,</mml:mo><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>l</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mn>2</mml:mn></mml:msub></mml:msub><mml:mo>,</mml:mo><mml:mo>&#x22EF;</mml:mo><mml:mo>,</mml:mo><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>l</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mi>n</mml:mi></mml:msub></mml:msub></mml:mfenced><mml:mo>.</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula><inline-formula><mml:math id="mm64"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mn>0</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>V</mml:mi></mml:msub><mml:mo>=</mml:mo><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>o</mml:mi><mml:mi>u</mml:mi><mml:mi>t</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>&#x2208;</mml:mo><mml:msup><mml:mi>R</mml:mi><mml:mrow><mml:mi>N</mml:mi><mml:mo>&#xD7;</mml:mo><mml:mi>F</mml:mi><mml:mo>&#xD7;</mml:mo><mml:mi>C</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:semantics></mml:math></inline-formula>, <inline-formula><mml:math id="mm65"><mml:semantics><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>o</mml:mi><mml:mi>u</mml:mi><mml:mi>t</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup></mml:semantics></mml:math></inline-formula> is the final output of the temporal block. The current representation of the node <inline-formula><mml:math id="mm66"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>l</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mi>i</mml:mi></mml:msub></mml:msub></mml:mrow></mml:semantics></mml:math></inline-formula> concatenates with its clustered neighborhood vectors <inline-formula><mml:math id="mm67"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>l</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>u</mml:mi></mml:msub></mml:mrow></mml:semantics></mml:math></inline-formula> and then feeds into the fully connected layer <inline-formula><mml:math id="mm68"><mml:semantics><mml:mi>&#x3C3;</mml:mi></mml:semantics></mml:math></inline-formula> with a nonlinear activation function, which is used for the next presentation. In this work, we use the <inline-formula><mml:math id="mm69"><mml:semantics><mml:mrow><mml:mi>M</mml:mi><mml:mi>E</mml:mi><mml:mi>A</mml:mi><mml:mi>N</mml:mi><mml:mo>(</mml:mo><mml:mo>.</mml:mo><mml:mo>)</mml:mo></mml:mrow></mml:semantics></mml:math></inline-formula> aggregator function, and <inline-formula><mml:math id="mm70"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>l</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>V</mml:mi></mml:msub></mml:mrow></mml:semantics></mml:math></inline-formula> is the final output at the <inline-formula><mml:math id="mm71"><mml:semantics><mml:msup><mml:mi>l</mml:mi><mml:mrow><mml:mi>t</mml:mi><mml:mi>h</mml:mi></mml:mrow></mml:msup></mml:semantics></mml:math></inline-formula> layer.</p>
+        </sec>
+        <sec id="sec4dot2dot2-sensors-23-00841">
+          <title>4.2.2. Mix-Hop Propagation Graph Convolution Module (MGCN)</title>
+          <p>In this module, we uses the mix-hop propagation graph convolution module as shown in <xref ref-type="fig" rid="sensors-23-00841-f004">Figure 4</xref>. The MGCN module mainly adopts the mix-hop propagation layer to handle information flow on spatially related nodes, which consists of two steps, information propagation and information selection. The module can preserve the original state of some nodes in the process of propagation so that the state of the propagated nodes can not only maintain the locality but also explore the deep neighborhood. Given <inline-formula><mml:math id="mm72"><mml:semantics><mml:mrow><mml:mi>G</mml:mi><mml:mo>=</mml:mo><mml:mo>(</mml:mo><mml:mi>V</mml:mi><mml:mo>,</mml:mo><mml:mi>E</mml:mi><mml:mo>,</mml:mo><mml:mi>A</mml:mi><mml:mo>)</mml:mo></mml:mrow></mml:semantics></mml:math></inline-formula>, the information propagation is defined as: <disp-formula id="FD14-sensors-23-00841"><label>(14)</label><mml:math id="mm73" display="block"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>H</mml:mi><mml:mrow><mml:mi>l</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>=</mml:mo><mml:mi>&#x3BC;</mml:mi><mml:msubsup><mml:mi>H</mml:mi><mml:mrow><mml:mn>1</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>+</mml:mo><mml:mrow><mml:mo>(</mml:mo><mml:mn>1</mml:mn><mml:mo>&#x2212;</mml:mo><mml:mi>&#x3BC;</mml:mi><mml:mo>)</mml:mo></mml:mrow><mml:mover accent="true"><mml:mi>A</mml:mi><mml:mo>&#x2DC;</mml:mo></mml:mover><mml:msubsup><mml:mi>H</mml:mi><mml:mrow><mml:mi>l</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula><inline-formula><mml:math id="mm74"><mml:semantics><mml:mi>&#x3BC;</mml:mi></mml:semantics></mml:math></inline-formula> is a hyperparameter mainly used to control the proportion of the original node state, <inline-formula><mml:math id="mm75"><mml:semantics><mml:msubsup><mml:mi>H</mml:mi><mml:mrow><mml:mi>l</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup></mml:semantics></mml:math></inline-formula> and <inline-formula><mml:math id="mm76"><mml:semantics><mml:msubsup><mml:mi>H</mml:mi><mml:mrow><mml:mi>l</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup></mml:semantics></mml:math></inline-formula> represent the output of the <inline-formula><mml:math id="mm77"><mml:semantics><mml:msup><mml:mi>l</mml:mi><mml:mrow><mml:mi>t</mml:mi><mml:mi>h</mml:mi></mml:mrow></mml:msup></mml:semantics></mml:math></inline-formula> layer and <inline-formula><mml:math id="mm78"><mml:semantics><mml:msup><mml:mrow><mml:mo>(</mml:mo><mml:mi>l</mml:mi><mml:mo>&#x2212;</mml:mo><mml:mn>1</mml:mn><mml:mo>)</mml:mo></mml:mrow><mml:mrow><mml:mi>t</mml:mi><mml:mi>h</mml:mi></mml:mrow></mml:msup></mml:semantics></mml:math></inline-formula> layer, <inline-formula><mml:math id="mm79"><mml:semantics><mml:msub><mml:mi>H</mml:mi><mml:mn>1</mml:mn></mml:msub></mml:semantics></mml:math></inline-formula> represents the output of the previous layer, and <inline-formula><mml:math id="mm80"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>H</mml:mi><mml:mrow><mml:mn>1</mml:mn></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>=</mml:mo><mml:msubsup><mml:mi>z</mml:mi><mml:mrow><mml:mi>o</mml:mi><mml:mi>u</mml:mi><mml:mi>t</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup></mml:mrow></mml:semantics></mml:math></inline-formula> for the normalized adjacency matrix. The information selection step is defined as follows:<disp-formula id="FD15-sensors-23-00841"><label>(15)</label><mml:math id="mm81" display="block"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>H</mml:mi><mml:mrow><mml:mi>out</mml:mi><mml:mspace width="4.pt"/></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>=</mml:mo><mml:munderover><mml:mo>&#x2211;</mml:mo><mml:mrow><mml:mi>l</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>L</mml:mi></mml:munderover><mml:msubsup><mml:mi>H</mml:mi><mml:mrow><mml:mi>l</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mi>W</mml:mi><mml:mi>l</mml:mi></mml:msub><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula><italic>L</italic> is number of layers for graph convolution, and <inline-formula><mml:math id="mm82"><mml:semantics><mml:msubsup><mml:mi>H</mml:mi><mml:mrow><mml:mi>out</mml:mi><mml:mspace width="4.pt"/></mml:mrow><mml:mi>t</mml:mi></mml:msubsup></mml:semantics></mml:math></inline-formula> represents the current layer output. The parametric matrix <inline-formula><mml:math id="mm83"><mml:semantics><mml:msup><mml:mi>W</mml:mi><mml:mi>l</mml:mi></mml:msup></mml:semantics></mml:math></inline-formula> is used as a feature selector, and we set the value to zero when the graph structure does not have a spatial dependency to preserve the original structure information.
+          <disp-formula id="FD16-sensors-23-00841"><label>(16)</label><mml:math id="mm84" display="block"><mml:semantics><mml:mrow><mml:msubsup><mml:mi>H</mml:mi><mml:mrow><mml:mi>s</mml:mi><mml:mi>t</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>=</mml:mo><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>o</mml:mi><mml:mi>u</mml:mi><mml:mi>t</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:msub><mml:mo>,</mml:mo><mml:mi>V</mml:mi></mml:msub><mml:mo>&#x2295;</mml:mo><mml:msubsup><mml:mi>H</mml:mi><mml:mrow><mml:mi>out</mml:mi><mml:mspace width="4.pt"/></mml:mrow><mml:mi>t</mml:mi></mml:msubsup><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula><inline-formula><mml:math id="mm85"><mml:semantics><mml:msubsup><mml:mi>h</mml:mi><mml:mrow><mml:mi>o</mml:mi><mml:mi>u</mml:mi><mml:mi>t</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup></mml:semantics></mml:math></inline-formula> is the final output of the GraphSAGE module, and &#x2295; is the addition of elements. The structure of the double-graph convolution is added to obtain the output of the temporal and spatial module <inline-formula><mml:math id="mm86"><mml:semantics><mml:msubsup><mml:mi>H</mml:mi><mml:mrow><mml:mi>s</mml:mi><mml:mi>t</mml:mi></mml:mrow><mml:mi>t</mml:mi></mml:msubsup></mml:semantics></mml:math></inline-formula>.</p>
+        </sec>
+      </sec>
+    </sec>
+    <sec id="sec5-sensors-23-00841">
+      <title>5. Experiments</title>
+      <p>In this section, we verify the effectiveness of our proposed model on four real datasets. We will introduce the experiments in detail from the aspects of experiment setup, baselines, convergence analysis, parameter study, experiment results, ablation experiment, and case study.</p>
+      <sec id="sec5dot1-sensors-23-00841">
+        <title>5.1. Experiment Setup</title>
+        <sec id="sec5dot1dot1-sensors-23-00841">
+          <title>5.1.1. Dataset</title>
+          <p>We evaluate the preformace of our proposed model and baseline models on four widely used traffic datasets. The properties of the datasets are summarized in <xref ref-type="table" rid="sensors-23-00841-t001">Table 1</xref>. Traffic speed and traffic flow are both important research questions for traffic forecasting, and we collected two representative datasets. METR-LA and PEMS-BAY are traffic speed datasets. PEMS04 and PEMS08 are traffic flow datasets. Nodes represent the number of sensors on the traffic network and Edges are weights, which are obtained by the distance between sensors on the traffic network. The data collection interval is every five minutes as a time step. Because of the speed limitations of these regions, traffic speed is floating-point data and traffic flow data represent the number of passing vehicles.</p>
+          <list list-type="bullet">
+            <list-item>
+              <p>METR-LA [<xref ref-type="bibr" rid="B14-sensors-23-00841">14</xref>,<xref ref-type="bibr" rid="B15-sensors-23-00841">15</xref>]: It is a public traffic speed dataset collected from Los Angeles County highways that contains data from 207 sensors from 1 March 2012 to 30 June 2012. Sensors are used to detect the presence or passage of vehicles, mainly detecting traffic information, including traffic flow and traffic speed information. Traffic speed is recorded every five minutes for a total of 34,272 time slices.</p>
+            </list-item>
+            <list-item>
+              <p>PEMS-BAY [<xref ref-type="bibr" rid="B14-sensors-23-00841">14</xref>,<xref ref-type="bibr" rid="B15-sensors-23-00841">15</xref>]: It is a dataset of public traffic speeds collected from the California Department of Transportation measurement system. Specifically, PEMS-BAY contains data from 325 sensors in the Gulf over a six-month period from 1 January 2017 to 31 May 2017. Traffic information is recorded at a rate of 5 min with a total 52,116 time slices.</p>
+            </list-item>
+            <list-item>
+              <p>PEMS04 [<xref ref-type="bibr" rid="B28-sensors-23-00841">28</xref>,<xref ref-type="bibr" rid="B35-sensors-23-00841">35</xref>]: It is a dataset of public traffic flows collected from CalTrans PeMS. Specifically, PEMS04 contains data from 307 sensors in District 04 over a two-month period from 1 January 2018 to 28 February 2018. Traffic information is recorded every 5 min, and the total number of time slices is 16,992.</p>
+            </list-item>
+            <list-item>
+              <p>PEMS08 [<xref ref-type="bibr" rid="B28-sensors-23-00841">28</xref>,<xref ref-type="bibr" rid="B35-sensors-23-00841">35</xref>]: It is a dataset of public traffic flow collected from CalTrans PeMS. Specifically, PEMS08 contains data from 170 sensors in District 08 for a two-month period from 1 July 2018 to 31 August 2018. Traffic information is recorded every 5 min, and the total number of time slices is 17,856.</p>
+            </list-item>
+          </list>
+        </sec>
+        <sec id="sec5dot1dot2-sensors-23-00841">
+          <title>5.1.2. Parameter Setting</title>
+          <p>We divided the dataset into a training set, validation set, and testing set in the ratio of 7:1:2 and used the same hyperparameters on four datasets. <italic>S</italic> and <italic>T</italic> are set equal to 12, the first <italic>S</italic> time steps are our input data, and the last <italic>T</italic> time steps are considered to be our actual label values. Using 12 consecutive time steps from the past, we predicted 12 successive time steps in the future. In each dataset, all experiments were repeated ten times. The number of layers <italic>N</italic> for the entire spatial&#x2013;temporal block is set to 3; the number of layers <italic>L</italic> of the spatial blcok is set to 2; and the number of layers <italic>K</italic> of the temporal block is set to 3. In the model proposed in this paper, all the convolution operations are set with 64 filters (including graph convolution and 1D convolutional network). In the spatial&#x2013;temporal block, the size of the hidden layers was set to 64. The initial value of the expansion factor was set to 2. In the training stage, we use adam to optimize the model, the batch size is 32, and the learning rate is set as <inline-formula><mml:math id="mm87"><mml:semantics><mml:mrow><mml:mn>0.001</mml:mn></mml:mrow></mml:semantics></mml:math></inline-formula>. <xref ref-type="table" rid="sensors-23-00841-t002">Table 2</xref> provides a detailed description of the parameter setting.</p>
+        </sec>
+        <sec id="sec5dot1dot3-sensors-23-00841">
+          <title>5.1.3. Evaluation Function</title>
+          <p>We use three evaluation metrics commonly used in baseline papers to evaluate the predictive effect of the model, including mean absolute error (MAE), root mean square error (RMSE), and mean absolute percentage error (MAPE). The formula is shown below:<disp-formula id="FD17-sensors-23-00841"><label>(17)</label><mml:math id="mm88" display="block"><mml:semantics><mml:mrow><mml:mi>RMSE</mml:mi><mml:mo>=</mml:mo><mml:msqrt><mml:mrow><mml:mfrac><mml:mn>1</mml:mn><mml:mi>R</mml:mi></mml:mfrac><mml:munderover><mml:mo>&#x2211;</mml:mo><mml:mrow><mml:mi>r</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>R</mml:mi></mml:munderover><mml:msup><mml:mfenced separators="" open="(" close=")"><mml:msubsup><mml:mi>X</mml:mi><mml:mrow><mml:mi>r</mml:mi></mml:mrow><mml:mfenced separators="" open="(" close=")"><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mn>1</mml:mn><mml:mo>:</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mi>T</mml:mi></mml:mfenced></mml:msubsup><mml:mo>&#x2212;</mml:mo><mml:msup><mml:mover accent="true"><mml:msub><mml:mi>X</mml:mi><mml:mi>r</mml:mi></mml:msub><mml:mo stretchy="false">^</mml:mo></mml:mover><mml:mrow><mml:mo>(</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mn>1</mml:mn><mml:mo>:</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mi>T</mml:mi><mml:mo>)</mml:mo></mml:mrow></mml:msup></mml:mfenced><mml:mn>2</mml:mn></mml:msup></mml:mrow></mml:msqrt><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula>
+          <disp-formula id="FD18-sensors-23-00841"><label>(18)</label><mml:math id="mm89" display="block"><mml:semantics><mml:mrow><mml:mi>MAE</mml:mi><mml:mo>=</mml:mo><mml:mfrac><mml:mn>1</mml:mn><mml:mi>R</mml:mi></mml:mfrac><mml:munderover><mml:mo>&#x2211;</mml:mo><mml:mrow><mml:mi>r</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>R</mml:mi></mml:munderover><mml:mfenced separators="" open="|" close="|"><mml:mo>(</mml:mo><mml:msubsup><mml:mi>X</mml:mi><mml:mrow><mml:mi>r</mml:mi></mml:mrow><mml:mfenced separators="" open="(" close=")"><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mn>1</mml:mn><mml:mo>:</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mi>T</mml:mi></mml:mfenced></mml:msubsup><mml:mo>&#x2212;</mml:mo><mml:msup><mml:mover accent="true"><mml:msub><mml:mi>X</mml:mi><mml:mi>r</mml:mi></mml:msub><mml:mo stretchy="false">^</mml:mo></mml:mover><mml:mrow><mml:mo>(</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mn>1</mml:mn><mml:mo>:</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mi>T</mml:mi><mml:mo>)</mml:mo></mml:mrow></mml:msup><mml:mo>)</mml:mo></mml:mfenced><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula>
+          <disp-formula id="FD19-sensors-23-00841"><label>(19)</label><mml:math id="mm90" display="block"><mml:semantics><mml:mrow><mml:mi>MAPE</mml:mi><mml:mo>=</mml:mo><mml:munderover><mml:mo>&#x2211;</mml:mo><mml:mrow><mml:mi>r</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>R</mml:mi></mml:munderover><mml:mfenced separators="" open="|" close="|"><mml:mfrac><mml:mrow><mml:msubsup><mml:mi>X</mml:mi><mml:mrow><mml:mi>r</mml:mi></mml:mrow><mml:mfenced separators="" open="(" close=")"><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mn>1</mml:mn><mml:mo>:</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mi>T</mml:mi></mml:mfenced></mml:msubsup><mml:mo>&#x2212;</mml:mo><mml:msup><mml:mover accent="true"><mml:msub><mml:mi>X</mml:mi><mml:mi>r</mml:mi></mml:msub><mml:mo stretchy="false">^</mml:mo></mml:mover><mml:mrow><mml:mo>(</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mn>1</mml:mn><mml:mo>:</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mi>T</mml:mi><mml:mo>)</mml:mo></mml:mrow></mml:msup></mml:mrow><mml:msubsup><mml:mi>X</mml:mi><mml:mrow><mml:mi>r</mml:mi></mml:mrow><mml:mfenced separators="" open="(" close=")"><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mn>1</mml:mn><mml:mo>:</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mi>T</mml:mi></mml:mfenced></mml:msubsup></mml:mfrac></mml:mfenced><mml:mo>&#xD7;</mml:mo><mml:mfrac><mml:mn>100</mml:mn><mml:mi>r</mml:mi></mml:mfrac><mml:mo>,</mml:mo></mml:mrow></mml:semantics></mml:math></disp-formula>
+          among them, the MAE measure reflects the prediction accuracy, the RMSE is more sensitive to outliers, and MAPE can eliminate the influence of data units to a certain extent. <italic>R</italic> is the total number of samples, and <inline-formula><mml:math id="mm91"><mml:semantics><mml:msubsup><mml:mi>X</mml:mi><mml:mrow><mml:mi>r</mml:mi></mml:mrow><mml:mfenced separators="" open="(" close=")"><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mn>1</mml:mn><mml:mo>:</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mi>T</mml:mi></mml:mfenced></mml:msubsup></mml:semantics></mml:math></inline-formula> and <inline-formula><mml:math id="mm92"><mml:semantics><mml:msup><mml:mover accent="true"><mml:msub><mml:mi>X</mml:mi><mml:mi>r</mml:mi></mml:msub><mml:mo stretchy="false">^</mml:mo></mml:mover><mml:mrow><mml:mo>(</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mn>1</mml:mn><mml:mo>:</mml:mo><mml:mi>t</mml:mi><mml:mo>+</mml:mo><mml:mi>T</mml:mi><mml:mo>)</mml:mo></mml:mrow></mml:msup></mml:semantics></mml:math></inline-formula> are the actual and predicted values of the <inline-formula><mml:math id="mm93"><mml:semantics><mml:msup><mml:mi>r</mml:mi><mml:mrow><mml:mi>t</mml:mi><mml:mi>h</mml:mi></mml:mrow></mml:msup></mml:semantics></mml:math></inline-formula> sample. The smaller the value of the above metrics, the better the predictive performance of the model.</p>
+        </sec>
+      </sec>
+      <sec id="sec5dot2-sensors-23-00841">
+        <title>5.2.  Baselines</title>
+        <p>We selected the latest research methods to compare our models.</p>
+        <list list-type="bullet">
+          <list-item>
+            <p>FC-LSTM [<xref ref-type="bibr" rid="B17-sensors-23-00841">17</xref>]: This model uses a Long Short-Term Memory network with fully connected hidden cells to predict traffic data.</p>
+          </list-item>
+          <list-item>
+            <p>T-GCN [<xref ref-type="bibr" rid="B24-sensors-23-00841">24</xref>]: This model uses, respectively, GCN and GRU to capture the spatial and temporal correlations of transportation networks.</p>
+          </list-item>
+          <list-item>
+            <p>Graph WaveNet [<xref ref-type="bibr" rid="B15-sensors-23-00841">15</xref>]: This model introduces a self-adaptive graph to capture the hidden spatial dependency and uses dilated convolution to capture the temporal dependency.</p>
+          </list-item>
+          <list-item>
+            <p>STFGNN [<xref ref-type="bibr" rid="B35-sensors-23-00841">35</xref>]: This model uses spatial&#x2013;temporal graphs to capture spatial&#x2013;temporal correlations in traffic networks.</p>
+          </list-item>
+          <list-item>
+            <p>STSGCN [<xref ref-type="bibr" rid="B28-sensors-23-00841">28</xref>]: This model uses a spatial&#x2013;temporal synchronous graph convolution network to independently model local correlations through a local time&#x2013;space subgraph module.</p>
+          </list-item>
+          <list-item>
+            <p>DCRNN [<xref ref-type="bibr" rid="B25-sensors-23-00841">25</xref>]: This model uses a diffusion&#x2013;convolution recursive neural network, which combines diffusion graph convolution with a recurrent neural network.</p>
+          </list-item>
+          <list-item>
+            <p>STGCN [<xref ref-type="bibr" rid="B33-sensors-23-00841">33</xref>]: The model combines graph convolution with one-dimensional convolution to capture spatial&#x2013;temporal correlations.</p>
+          </list-item>
+          <list-item>
+            <p>ASTGCN [<xref ref-type="bibr" rid="B30-sensors-23-00841">30</xref>]: This model uses a spatial&#x2013;temporal attention mechanism to capture the dynamic spatial&#x2013;temporal characteristics of traffic data.</p>
+          </list-item>
+          <list-item>
+            <p>MTGNN [<xref ref-type="bibr" rid="B14-sensors-23-00841">14</xref>]: This is a multi-variable time series prediction model using a graph neural network from a graph perspective.</p>
+          </list-item>
+        </list>
+      </sec>
+      <sec id="sec5dot3-sensors-23-00841">
+        <title>5.3. Convergence Analysis</title>
+        <p>In order to explore the convergence of our proposed model, we show the error between the ground truth and the prediction results preduced by MD-GCN in the training and validation process on the four datasets in <xref ref-type="fig" rid="sensors-23-00841-f005">Figure 5</xref> and <xref ref-type="fig" rid="sensors-23-00841-f006">Figure 6</xref>. The X-axis in the figures represents the number of training epoches, and the Y-axis represents the loss of the training process and validation. We can see that as the number of training epoches increases, the loss continues to decrease and eventually reaches a convergent state. It can be seen that the results of the training and validation losses tend to stabilize after 80 epoches, which indicates that the model has reached the convergence state. The remaining three datasets can also converge after 80 epoches from <xref ref-type="fig" rid="sensors-23-00841-f005">Figure 5</xref> and <xref ref-type="fig" rid="sensors-23-00841-f006">Figure 6</xref>. Therefore, in a later study, we set the number of training epoches to 100 (slightly greater than 100).</p>
+      </sec>
+      <sec id="sec5dot4-sensors-23-00841">
+        <title>5.4. Parameters Study</title>
+        <p>In the section, <xref ref-type="fig" rid="sensors-23-00841-f007">Figure 7</xref> shows our study of two parameters in our model on the dataset METR-LA parameters; the X-axis represents the set value of the parameter, and the Y-axis represents the two evaluation indicators of MAE and RMSE.</p>
+        <p>In the spatial block, as the number of network layers deepens, node representations of the same connectivity graph tend to have the same value; it is impossible to distinguish between different nodes (over-smoothing). In order to solve the problem, we set an initial node information retention factor <inline-formula><mml:math id="mm94"><mml:semantics><mml:mi>&#x3BB;</mml:mi></mml:semantics></mml:math></inline-formula>. As shown in <xref ref-type="fig" rid="sensors-23-00841-f007">Figure 7</xref>a, the values of the parameters are set to <inline-formula><mml:math id="mm95"><mml:semantics><mml:mfenced separators="" open="[" close="]"><mml:mn>0.03</mml:mn><mml:mo>,</mml:mo><mml:mn>0.04</mml:mn><mml:mo>,</mml:mo><mml:mn>0.05</mml:mn><mml:mo>,</mml:mo><mml:mn>0.06</mml:mn><mml:mo>,</mml:mo><mml:mn>0.07</mml:mn></mml:mfenced></mml:semantics></mml:math></inline-formula>; when <inline-formula><mml:math id="mm96"><mml:semantics><mml:mi>&#x3BB;</mml:mi></mml:semantics></mml:math></inline-formula> takes 0.05, the experimental error is minimal.</p>
+        <p>The number of layers in the spatial block will have different effects on the extraction of spatial information, so we use an experimental comparison to select the most suitable number of layers for the spatial block. As shown in <xref ref-type="fig" rid="sensors-23-00841-f007">Figure 7</xref>b, the number of layers is set to four values, <inline-formula><mml:math id="mm97"><mml:semantics><mml:mfenced separators="" open="[" close="]"><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mn>2</mml:mn><mml:mo>,</mml:mo><mml:mn>3</mml:mn><mml:mo>,</mml:mo><mml:mn>4</mml:mn></mml:mfenced></mml:semantics></mml:math></inline-formula>; when the number of layers is taken by 2, the experiments predict the best results.</p>
+      </sec>
+      <sec id="sec5dot5-sensors-23-00841">
+        <title>5.5. Experimental Results</title>
+        <p><xref ref-type="table" rid="sensors-23-00841-t003">Table 3</xref> and <xref ref-type="table" rid="sensors-23-00841-t004">Table 4</xref> show the experimental results of our proposed model compared with different baselines on METR-LA and PMES-BAY. Horizon 3, 6, and 12 represent the third, sixth, and twelfth time steps, respectively, representing 15 min, 30 min and 60 min to predict the situation. The results show that our proposed model consistently outperforms the baselines on the METR-LA and PMES-BAY datasets, especially on the predictions of 30 min and 60 min. This reason may be that convolution-based approaches are less able to capture more spatial dependencies, whereas our dual graph convolution can capture more hidden spatial dependencies and features, thus improving the prediction results. Compared with MTGNN, our model reduced MAE and RMSE by 2.01%, 2.81%, 1.71%, and 2.11% at 30 min and 60 min on the METR-LA dataset. In <xref ref-type="table" rid="sensors-23-00841-t005">Table 5</xref>, we compared the results produced by different models on the PEMS04 and PMES08 datasets with repsect to MAE, RMSE and MAPE. Compared with the model STFGNN, our model improved by 6.53%, 7.63%, and 3.33% on three evaluation metrics, respectively, on PEMS08. MD-GCN also achieved better results than the baselines on other datasets. This reason may be that the multi-scale gated temporal convolution module can capture temporal correlation over different time periods and achieve better results on the average prediction results.</p>
+        <p>Compared with ASTGCN, STFGNN, MTGNN, and GraphWaveNet, the MD-GCN model proposed in this paper adopts the method of constructing spatial&#x2013;temporal information mining hidden structures. In a temporal block, we use channel attention mechanisms and temporal convolution networks to combine the characteristics of data at different scales. Our spatial block adopts the method of graph convolution and graph aggregation sampling dual graph fusion to integrate the spatial information extracted in different ways. To further investigate the effect of our model, we show the training error at each time step of the two datasets METR-LA and PMES08 in <xref ref-type="fig" rid="sensors-23-00841-f008">Figure 8</xref> and <xref ref-type="fig" rid="sensors-23-00841-f009">Figure 9</xref>; our model performed better than the other models at each step of these two data. FC-LSTM and T-GCN perform the worst; as the length of the prediction increases, the prediction performance decreases significantly, which proves the validity of the spatial&#x2013;temporal blocks. DCRNN, STGCN, ASTGCN, and GraphWaveNet have similar predictive performance and can all achieve good results in short-term time steps. However, the stability of these models is not enough, and the performance degradation rate is significantly higher than that of our model. Although the most stable of these comparison models is MTGNN, MTGNN is weaker than our overall prediction accuracy. Our model predicts significantly more stable curves and slower performance degradation.</p>
+      </sec>
+      <sec id="sec5dot6-sensors-23-00841">
+        <title>5.6. Ablation Experiments</title>
+        <p>In order to verify the effectiveness of each module in the model, we performed ablation tests on four datasets, and the main process is as follows:<list list-type="bullet"><list-item><p>w/o GraphSAGE: In the mixed hop propagation graph convolution module, we remove the GraphSAGE module.</p></list-item><list-item><p>w/o EPSALayer: In the temporal module, we remove the efficient pyramid split attention module.</p></list-item><list-item><p>w/o MGTCN: We replace the multi-scale gated temporal convolution module with a normal time convolution module.</p></list-item></list></p>
+        <p>In our experimental setup, we first verify the validity of the dual graph convolution module and then use the graph convolution module alone to extract the spatial structure information. Second, we validated the need for the channel focus mechanism by removing the EPSAlayer module. Finally, we choose the traditional temporal convolution module to verify the MGTCN module. As shown in <xref ref-type="fig" rid="sensors-23-00841-f010">Figure 10</xref> and <xref ref-type="fig" rid="sensors-23-00841-f011">Figure 11</xref>, the GraphSAGE module plays a key role in the model, and the other two modules on our model also play a different role. Thus, the validity of the various modules in our MD-GCN model is verified.</p>
+      </sec>
+      <sec id="sec5dot7-sensors-23-00841">
+        <title>5.7.  A Case Study</title>
+        <p>In this section, we plotted the predictions of MTGNN and our model 60 min ahead against the actual values on both datasets. We randomly selected the prediction of two sensors over time from two datasets, and the final result is shown in <xref ref-type="fig" rid="sensors-23-00841-f012">Figure 12</xref> and <xref ref-type="fig" rid="sensors-23-00841-f013">Figure 13</xref>. The X-axis represents the number of time steps and the Y-axis is the traffic speed at which the vehicle is traveling. Sensor 1 and sensor 2 are the two adjacent sensors we selected. We obtain some conclusions by observation figures: (1) with the change of time, when the true value of traffic oscillates, our predicted value generates a smoothed prediction of the average, reflecting the robustness of our model; (2) for spatial relationships, the predictions of two adjacent sensors tend to show similar characteristics; (3) as shown by the red dotted line in the figures, in the face of sudden changes in traffic speed, our model predicts more accurate results than MTGNN; (4) due to the different patterns of different geographical locations, the congestion time periods reflected on the two figures are not exactly consistent, but our model can capture hidden dependencies between nodes and can represent good stability and performance in spatial&#x2013;temporal prediction. The prediction curve of our model can match the true flow curve better than Graph Wavenet, which further verifies the necessity of using the mode of dual graph convolution to extract multi-range spatial features and multi-scale gated convolution to extract richer temporal features.</p>
+      </sec>
+      <sec sec-type="discussion" id="sec5dot8-sensors-23-00841">
+        <title>5.8. Discussion</title>
+        <p>From the experimental results, we can see that our proposed MD-GCN model is able to obtain performance improvements in terms of the evaluation metrics: RMSE, MAE, and MAPE. Compared with our dual graph convolution module, MTGNN and Graph WaveNet only use adaptive graph convolution to extract spatial features, which makes it difficult to show good results in both long-term and short-term prediction. Our proposed model can enhance the ability to extract hidden spatial information by integrating two graph convolution methods to aggregate node information of different ranges. Compared with our MGTCN module and EPSA module in a temporal block, STSGCN and STFGNN use the temporal convolution to extract time information, and the predictions on average time steps are also not as effective as our model. Our proposed temporal module can extract time features at different ranges and adjust the features using channel attention to obtain more effective time correlation. From the results on these representative evaluation metrics, our model shows more stable and better results in traffic flow prediction than these popular baselines.</p>
+        <p>From the results obtained by the ablation experiment, we can find that our proposed dual graph convolution module and multi-scale gated temporal convolution module, as well as the EPSA module, can improve the accuracy of prediction, which also explains the necessity of our work. From the comparison of real road data and forecast data in the case study, we can intuitively observe that our model shows better stability and accuracy in the face of complex traffic data than other baseline models.</p>
+      </sec>
+    </sec>
+    <sec sec-type="conclusions" id="sec6-sensors-23-00841">
+      <title>6. Conclusions</title>
+      <p>In this paper, we propose a novel spatial&#x2013;temporal model (MD-GCN) to predict traffic conditions. Specifically, in terms of time dependence, we propose a gated temporal convolution module based on multi-scale channel attention combined with an &#x201C;inception&#x201D; structure. By expanding the width of the convolution network and combining the receptive field of temporal convolution at different scales, the temporal relationship capture ability of the model is effectively improved. For spatial dependencies, we combine two modules: the GraphSAGE module and the mix-hop propagation graph convolution module. The spatial information extracted by fusing the two modules improves the ability of the model to obtain feature relationships of different ranges in traffic networks. Finally, we choose to verify the validity and stability of the model on four datasets METR-LA, PEMS-BAY, PEMS04, and PEMS08. In addition, the ablation experiments again validate the effectiveness of our model. For future work, we will consider the influence of various external factors to further improve our work.</p>
+    </sec>
+  </body>
+  <back>
+    <notes>
+      <title>Author Contributions</title>
+      <p>Writing&#x2014;original draft, J.W.; Writing&#x2014;review &amp; editing, X.H., J.W., Y.L., C.J. and X.Y. All authors have read and agreed to the published version of the manuscript.</p>
+    </notes>
+    <notes>
+      <title>Institutional Review Board Statement</title>
+      <p>Not applicable.</p>
+    </notes>
+    <notes>
+      <title>Informed Consent Statement</title>
+      <p>Not applicable.</p>
+    </notes>
+    <notes>
+      <title>Data Availability Statement</title>
+      <p>The public datasets METR-LA and PEMS-BAY can be obtained at <uri>https://github.com/liyaguang/DCRNN</uri>. PMES04 dataset and PEMS08 dataset can be obtained at <uri>https://github.com/MengzhangLI/STFGNN</uri>.</p>
+    </notes>
+    <ack>
+      <title>Acknowledgments</title>
+      <p>This research was supported by the National Natural Science Foundation of China under Grant No.62062033.</p>
+    </ack>
+    <notes notes-type="COI-statement">
+      <title>Conflicts of Interest</title>
+      <p>The authors declare no conflict of interest.</p>
+    </notes>
+    <ref-list>
+      <title>References</title>
+      <ref id="B1-sensors-23-00841">
+        <label>1.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Yuan</surname>
+              <given-names>H.</given-names>
+            </name>
+            <name>
+              <surname>Li</surname>
+              <given-names>G.</given-names>
+            </name>
+          </person-group>
+          <article-title>A survey of traffic prediction: From spatio-temporal data to intelligent transportation</article-title>
+          <source>Data Sci. Eng.</source>
+          <year>2021</year>
+          <volume>6</volume>
+          <fpage>63</fpage>
+          <lpage>85</lpage>
+          <pub-id pub-id-type="doi">10.1007/s41019-020-00151-z</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B2-sensors-23-00841">
+        <label>2.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Fang</surname>
+              <given-names>Z.</given-names>
+            </name>
+            <name>
+              <surname>Pan</surname>
+              <given-names>L.</given-names>
+            </name>
+            <name>
+              <surname>Chen</surname>
+              <given-names>L.</given-names>
+            </name>
+            <name>
+              <surname>Du</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Gao</surname>
+              <given-names>Y.</given-names>
+            </name>
+          </person-group>
+          <article-title>MDTP: A multi-source deep traffic prediction framework over spatio-temporal trajectory data</article-title>
+          <source>Proc. VLDB Endow.</source>
+          <year>2021</year>
+          <volume>14</volume>
+          <fpage>1289</fpage>
+          <lpage>1297</lpage>
+          <pub-id pub-id-type="doi">10.14778/3457390.3457394</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B3-sensors-23-00841">
+        <label>3.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Lana</surname>
+              <given-names>I.</given-names>
+            </name>
+            <name>
+              <surname>Del Ser</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Velez</surname>
+              <given-names>M.</given-names>
+            </name>
+            <name>
+              <surname>Vlahogianni</surname>
+              <given-names>E.I.</given-names>
+            </name>
+          </person-group>
+          <article-title>Road traffic forecasting: Recent advances and new challenges</article-title>
+          <source>IEEE Intell. Transp. Syst. Mag.</source>
+          <year>2018</year>
+          <volume>10</volume>
+          <fpage>93</fpage>
+          <lpage>109</lpage>
+          <pub-id pub-id-type="doi">10.1109/MITS.2018.2806634</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B4-sensors-23-00841">
+        <label>4.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Ye</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Zhao</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Ye</surname>
+              <given-names>K.</given-names>
+            </name>
+            <name>
+              <surname>Xu</surname>
+              <given-names>C.</given-names>
+            </name>
+          </person-group>
+          <article-title>How to build a graph-based deep learning architecture in traffic domain: A survey</article-title>
+          <source>IEEE Trans. Intell. Transp. Syst.</source>
+          <year>2020</year>
+          <volume>23</volume>
+          <fpage>3904</fpage>
+          <lpage>3924</lpage>
+          <pub-id pub-id-type="doi">10.1109/TITS.2020.3043250</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B5-sensors-23-00841">
+        <label>5.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Zhou</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Cui</surname>
+              <given-names>G.</given-names>
+            </name>
+            <name>
+              <surname>Hu</surname>
+              <given-names>S.</given-names>
+            </name>
+            <name>
+              <surname>Zhang</surname>
+              <given-names>Z.</given-names>
+            </name>
+            <name>
+              <surname>Yang</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Liu</surname>
+              <given-names>Z.</given-names>
+            </name>
+            <name>
+              <surname>Wang</surname>
+              <given-names>L.</given-names>
+            </name>
+            <name>
+              <surname>Li</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Sun</surname>
+              <given-names>M.</given-names>
+            </name>
+          </person-group>
+          <article-title>Graph neural networks: A review of methods and applications</article-title>
+          <source>AI Open</source>
+          <year>2020</year>
+          <volume>1</volume>
+          <fpage>57</fpage>
+          <lpage>81</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.aiopen.2021.01.001</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B6-sensors-23-00841">
+        <label>6.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Lee</surname>
+              <given-names>K.</given-names>
+            </name>
+            <name>
+              <surname>Eo</surname>
+              <given-names>M.</given-names>
+            </name>
+            <name>
+              <surname>Jung</surname>
+              <given-names>E.</given-names>
+            </name>
+            <name>
+              <surname>Yoon</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Rhee</surname>
+              <given-names>W.</given-names>
+            </name>
+          </person-group>
+          <article-title>Short-term traffic prediction with deep neural networks: A survey</article-title>
+          <source>IEEE Access</source>
+          <year>2021</year>
+          <volume>9</volume>
+          <fpage>54739</fpage>
+          <lpage>54756</lpage>
+          <pub-id pub-id-type="doi">10.1109/ACCESS.2021.3071174</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B7-sensors-23-00841">
+        <label>7.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Luo</surname>
+              <given-names>X.</given-names>
+            </name>
+            <name>
+              <surname>Niu</surname>
+              <given-names>L.</given-names>
+            </name>
+            <name>
+              <surname>Zhang</surname>
+              <given-names>S.</given-names>
+            </name>
+          </person-group>
+          <article-title>An algorithm for traffic flow prediction based on improved SARIMA and GA</article-title>
+          <source>KSCE J. Civ. Eng.</source>
+          <year>2018</year>
+          <volume>22</volume>
+          <fpage>4107</fpage>
+          <lpage>4115</lpage>
+          <pub-id pub-id-type="doi">10.1007/s12205-018-0429-4</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B8-sensors-23-00841">
+        <label>8.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Fang</surname>
+              <given-names>M.</given-names>
+            </name>
+            <name>
+              <surname>Tang</surname>
+              <given-names>L.</given-names>
+            </name>
+            <name>
+              <surname>Yang</surname>
+              <given-names>X.</given-names>
+            </name>
+            <name>
+              <surname>Chen</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Li</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Li</surname>
+              <given-names>Q.</given-names>
+            </name>
+          </person-group>
+          <article-title>FTPG: A fine-grained traffic prediction method with graph attention network using big trace data</article-title>
+          <source>IEEE Trans. Intell. Transp. Syst.</source>
+          <year>2022</year>
+          <volume>23</volume>
+          <fpage>5163</fpage>
+          <lpage>5175</lpage>
+          <pub-id pub-id-type="doi">10.1109/TITS.2021.3049264</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B9-sensors-23-00841">
+        <label>9.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Yin</surname>
+              <given-names>X.</given-names>
+            </name>
+            <name>
+              <surname>Wu</surname>
+              <given-names>G.</given-names>
+            </name>
+            <name>
+              <surname>Wei</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Shen</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Qi</surname>
+              <given-names>H.</given-names>
+            </name>
+            <name>
+              <surname>Yin</surname>
+              <given-names>B.</given-names>
+            </name>
+          </person-group>
+          <article-title>Deep learning on traffic prediction: Methods, analysis and future directions</article-title>
+          <source>IEEE Trans. Intell. Transp. Syst.</source>
+          <year>2022</year>
+          <volume>23</volume>
+          <fpage>4927</fpage>
+          <lpage>4943</lpage>
+          <pub-id pub-id-type="doi">10.1109/TITS.2021.3054840</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B10-sensors-23-00841">
+        <label>10.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Liang</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Ke</surname>
+              <given-names>S.</given-names>
+            </name>
+            <name>
+              <surname>Zhang</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Yi</surname>
+              <given-names>X.</given-names>
+            </name>
+            <name>
+              <surname>Zheng</surname>
+              <given-names>Y.</given-names>
+            </name>
+          </person-group>
+          <article-title>Geoman: Multi-level attention networks for geo-sensory time series prediction</article-title>
+          <source>Proceedings of the 27th the International Joint Conference on Artificial Intelligence</source>
+          <conf-loc>Stockholm, Sweden</conf-loc>
+          <conf-date>13&#x2013;19 July 2018</conf-date>
+          <volume>Volume 2018</volume>
+          <fpage>3428</fpage>
+          <lpage>3434</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B11-sensors-23-00841">
+        <label>11.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Zheng</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Fan</surname>
+              <given-names>X.</given-names>
+            </name>
+            <name>
+              <surname>Wang</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Qi</surname>
+              <given-names>J.</given-names>
+            </name>
+          </person-group>
+          <article-title>Gman: A graph multi-attention network for traffic prediction</article-title>
+          <source>Proceedings of the AAAI Conference on Artificial Intelligence</source>
+          <conf-loc>New York, NY, USA</conf-loc>
+          <conf-date>7&#x2013;12 February 2020</conf-date>
+          <volume>Volume 34</volume>
+          <fpage>1234</fpage>
+          <lpage>1241</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B12-sensors-23-00841">
+        <label>12.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Yao</surname>
+              <given-names>H.</given-names>
+            </name>
+            <name>
+              <surname>Tang</surname>
+              <given-names>X.</given-names>
+            </name>
+            <name>
+              <surname>Wei</surname>
+              <given-names>H.</given-names>
+            </name>
+            <name>
+              <surname>Zheng</surname>
+              <given-names>G.</given-names>
+            </name>
+            <name>
+              <surname>Li</surname>
+              <given-names>Z.</given-names>
+            </name>
+          </person-group>
+          <article-title>Revisiting spatial-temporal similarity: A deep learning framework for traffic prediction</article-title>
+          <source>Proceedings of the AAAI Conference on Artificial Intelligence</source>
+          <conf-loc>Honolulu, HI, USA</conf-loc>
+          <conf-date>27 January&#x2013;1 February 2019</conf-date>
+          <volume>Volume 33</volume>
+          <fpage>5668</fpage>
+          <lpage>5675</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B13-sensors-23-00841">
+        <label>13.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Wu</surname>
+              <given-names>Z.</given-names>
+            </name>
+            <name>
+              <surname>Pan</surname>
+              <given-names>S.</given-names>
+            </name>
+            <name>
+              <surname>Chen</surname>
+              <given-names>F.</given-names>
+            </name>
+            <name>
+              <surname>Long</surname>
+              <given-names>G.</given-names>
+            </name>
+            <name>
+              <surname>Zhang</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Philip</surname>
+              <given-names>S.Y.</given-names>
+            </name>
+          </person-group>
+          <article-title>A comprehensive survey on graph neural networks</article-title>
+          <source>IEEE Trans. Neural Netw. Learn. Syst.</source>
+          <year>2020</year>
+          <volume>32</volume>
+          <fpage>4</fpage>
+          <lpage>24</lpage>
+          <pub-id pub-id-type="doi">10.1109/TNNLS.2020.2978386</pub-id>
+          <pub-id pub-id-type="pmid">32217482</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B14-sensors-23-00841">
+        <label>14.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Wu</surname>
+              <given-names>Z.</given-names>
+            </name>
+            <name>
+              <surname>Pan</surname>
+              <given-names>S.</given-names>
+            </name>
+            <name>
+              <surname>Long</surname>
+              <given-names>G.</given-names>
+            </name>
+            <name>
+              <surname>Jiang</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Chang</surname>
+              <given-names>X.</given-names>
+            </name>
+            <name>
+              <surname>Zhang</surname>
+              <given-names>C.</given-names>
+            </name>
+          </person-group>
+          <article-title>Connecting the dots: Multivariate time series forecasting with graph neural networks</article-title>
+          <source>Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery &amp; Data Mining</source>
+          <conf-loc>Virtual Event</conf-loc>
+          <conf-date>6&#x2013;10 July 2020</conf-date>
+          <fpage>753</fpage>
+          <lpage>763</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B15-sensors-23-00841">
+        <label>15.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Wu</surname>
+              <given-names>Z.</given-names>
+            </name>
+            <name>
+              <surname>Pan</surname>
+              <given-names>S.</given-names>
+            </name>
+            <name>
+              <surname>Long</surname>
+              <given-names>G.</given-names>
+            </name>
+            <name>
+              <surname>Jiang</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Zhang</surname>
+              <given-names>C.</given-names>
+            </name>
+          </person-group>
+          <article-title>Graph wavenet for deep spatial-temporal graph modeling</article-title>
+          <source>Proceedings of the 28th International Joint Conference on Artificial Intelligence</source>
+          <conf-loc>Macao, China</conf-loc>
+          <conf-date>10&#x2013;16 August 2019</conf-date>
+          <fpage>1907</fpage>
+          <lpage>1913</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B16-sensors-23-00841">
+        <label>16.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Chen</surname>
+              <given-names>W.</given-names>
+            </name>
+            <name>
+              <surname>Chen</surname>
+              <given-names>L.</given-names>
+            </name>
+            <name>
+              <surname>Xie</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Cao</surname>
+              <given-names>W.</given-names>
+            </name>
+            <name>
+              <surname>Gao</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Feng</surname>
+              <given-names>X.</given-names>
+            </name>
+          </person-group>
+          <article-title>Multi-range attentive bicomponent graph convolutional network for traffic forecasting</article-title>
+          <source>Proceedings of the AAAI conference on Artificial Intelligence</source>
+          <conf-loc>New York, NY, USA</conf-loc>
+          <conf-date>7&#x2013;12 February 2020</conf-date>
+          <volume>Volume 34</volume>
+          <fpage>3529</fpage>
+          <lpage>3536</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B17-sensors-23-00841">
+        <label>17.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Sutskever</surname>
+              <given-names>I.</given-names>
+            </name>
+            <name>
+              <surname>Vinyals</surname>
+              <given-names>O.</given-names>
+            </name>
+            <name>
+              <surname>Le</surname>
+              <given-names>Q.V.</given-names>
+            </name>
+          </person-group>
+          <article-title>Sequence to sequence learning with neural networks</article-title>
+          <source>Adv. Neural Inf. Process. Syst.</source>
+          <year>2014</year>
+          <volume>27</volume>
+          <fpage>3104</fpage>
+          <lpage>3112</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B18-sensors-23-00841">
+        <label>18.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Sun</surname>
+              <given-names>P.</given-names>
+            </name>
+            <name>
+              <surname>Boukerche</surname>
+              <given-names>A.</given-names>
+            </name>
+            <name>
+              <surname>Tao</surname>
+              <given-names>Y.</given-names>
+            </name>
+          </person-group>
+          <article-title>SSGRU: A novel hybrid stacked GRU-based traffic volume prediction approach in a road network</article-title>
+          <source>Comput. Commun.</source>
+          <year>2020</year>
+          <volume>160</volume>
+          <fpage>502</fpage>
+          <lpage>511</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.comcom.2020.06.028</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B19-sensors-23-00841">
+        <label>19.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Zhang</surname>
+              <given-names>Q.</given-names>
+            </name>
+            <name>
+              <surname>Chang</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Meng</surname>
+              <given-names>G.</given-names>
+            </name>
+            <name>
+              <surname>Xiang</surname>
+              <given-names>S.</given-names>
+            </name>
+            <name>
+              <surname>Pan</surname>
+              <given-names>C.</given-names>
+            </name>
+          </person-group>
+          <article-title>Spatio-temporal graph structure learning for traffic forecasting</article-title>
+          <source>Proceedings of the AAAI Conference on Artificial Intelligence</source>
+          <conf-loc>New York, NY, USA</conf-loc>
+          <conf-date>7&#x2013;12 February 2020</conf-date>
+          <volume>Volume 34</volume>
+          <fpage>1177</fpage>
+          <lpage>1185</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B20-sensors-23-00841">
+        <label>20.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Yu</surname>
+              <given-names>F.</given-names>
+            </name>
+            <name>
+              <surname>Koltun</surname>
+              <given-names>V.</given-names>
+            </name>
+          </person-group>
+          <article-title>Multi-scale context aggregation by dilated convolutions</article-title>
+          <source>arXiv</source>
+          <year>2016</year>
+          <pub-id pub-id-type="arxiv">1511.07122</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B21-sensors-23-00841">
+        <label>21.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Tedjopurnomo</surname>
+              <given-names>D.A.</given-names>
+            </name>
+            <name>
+              <surname>Bao</surname>
+              <given-names>Z.</given-names>
+            </name>
+            <name>
+              <surname>Zheng</surname>
+              <given-names>B.</given-names>
+            </name>
+            <name>
+              <surname>Choudhury</surname>
+              <given-names>F.</given-names>
+            </name>
+            <name>
+              <surname>Qin</surname>
+              <given-names>A.K.</given-names>
+            </name>
+          </person-group>
+          <article-title>A survey on modern deep neural network for traffic prediction: Trends, methods and challenges</article-title>
+          <source>IEEE Trans. Knowl. Data Eng.</source>
+          <year>2022</year>
+          <volume>34</volume>
+          <fpage>1544</fpage>
+          <lpage>1561</lpage>
+          <pub-id pub-id-type="doi">10.1109/TKDE.2020.3001195</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B22-sensors-23-00841">
+        <label>22.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Zhang</surname>
+              <given-names>W.</given-names>
+            </name>
+            <name>
+              <surname>Yu</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Qi</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Shu</surname>
+              <given-names>F.</given-names>
+            </name>
+            <name>
+              <surname>Wang</surname>
+              <given-names>Y.</given-names>
+            </name>
+          </person-group>
+          <article-title>Short-term traffic flow prediction based on spatio-temporal analysis and CNN deep learning</article-title>
+          <source>Transp. A Transp. Sci.</source>
+          <year>2019</year>
+          <volume>15</volume>
+          <fpage>1688</fpage>
+          <lpage>1711</lpage>
+          <pub-id pub-id-type="doi">10.1080/23249935.2019.1637966</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B23-sensors-23-00841">
+        <label>23.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Bogaerts</surname>
+              <given-names>T.</given-names>
+            </name>
+            <name>
+              <surname>Masegosa</surname>
+              <given-names>A.D.</given-names>
+            </name>
+            <name>
+              <surname>Angarita-Zapata</surname>
+              <given-names>J.S.</given-names>
+            </name>
+            <name>
+              <surname>Onieva</surname>
+              <given-names>E.</given-names>
+            </name>
+            <name>
+              <surname>Hellinckx</surname>
+              <given-names>P.</given-names>
+            </name>
+          </person-group>
+          <article-title>A graph CNN-LSTM neural network for short and long-term traffic forecasting based on trajectory data</article-title>
+          <source>Transp. Res. Part C Emerg. Technol.</source>
+          <year>2020</year>
+          <volume>112</volume>
+          <fpage>62</fpage>
+          <lpage>77</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.trc.2020.01.010</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B24-sensors-23-00841">
+        <label>24.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Zhao</surname>
+              <given-names>L.</given-names>
+            </name>
+            <name>
+              <surname>Song</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Zhang</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Liu</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Wang</surname>
+              <given-names>P.</given-names>
+            </name>
+            <name>
+              <surname>Lin</surname>
+              <given-names>T.</given-names>
+            </name>
+            <name>
+              <surname>Deng</surname>
+              <given-names>M.</given-names>
+            </name>
+            <name>
+              <surname>Li</surname>
+              <given-names>H.</given-names>
+            </name>
+          </person-group>
+          <article-title>T-gcn: A temporal graph convolutional network for traffic prediction</article-title>
+          <source>IEEE Trans. Intell. Transp. Syst.</source>
+          <year>2019</year>
+          <volume>21</volume>
+          <fpage>3848</fpage>
+          <lpage>3858</lpage>
+          <pub-id pub-id-type="doi">10.1109/TITS.2019.2935152</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B25-sensors-23-00841">
+        <label>25.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Li</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Yu</surname>
+              <given-names>R.</given-names>
+            </name>
+            <name>
+              <surname>Shahabi</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Liu</surname>
+              <given-names>Y.</given-names>
+            </name>
+          </person-group>
+          <article-title>Diffusion convolutional recurrent neural network: Data-driven traffic forecasting</article-title>
+          <source>Proceedings of the 6th International Conference on Learning Representations</source>
+          <conf-loc>Vancouver, BC, Canada</conf-loc>
+          <conf-date>30 April&#x2013;3 May 2018</conf-date>
+          <fpage>1</fpage>
+          <lpage>16</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B26-sensors-23-00841">
+        <label>26.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Dai</surname>
+              <given-names>R.</given-names>
+            </name>
+            <name>
+              <surname>Xu</surname>
+              <given-names>S.</given-names>
+            </name>
+            <name>
+              <surname>Gu</surname>
+              <given-names>Q.</given-names>
+            </name>
+            <name>
+              <surname>Ji</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Liu</surname>
+              <given-names>K.</given-names>
+            </name>
+          </person-group>
+          <article-title>Hybrid spatio-temporal graph convolutional network: Improving traffic prediction with navigation data</article-title>
+          <source>Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery &amp; Data Mining</source>
+          <conf-loc>Virtual Event</conf-loc>
+          <conf-date>6&#x2013;10 July 2020</conf-date>
+          <fpage>3074</fpage>
+          <lpage>3082</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B27-sensors-23-00841">
+        <label>27.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Lu</surname>
+              <given-names>B.</given-names>
+            </name>
+            <name>
+              <surname>Gan</surname>
+              <given-names>X.</given-names>
+            </name>
+            <name>
+              <surname>Jin</surname>
+              <given-names>H.</given-names>
+            </name>
+            <name>
+              <surname>Fu</surname>
+              <given-names>L.</given-names>
+            </name>
+            <name>
+              <surname>Zhang</surname>
+              <given-names>H.</given-names>
+            </name>
+          </person-group>
+          <article-title>Spatio temporal adaptive gated graph convolution network for urban traffic flow forecasting</article-title>
+          <source>Proceedings of the 29th ACM International Conference on Information &amp; Knowledge Management</source>
+          <conf-loc>Online</conf-loc>
+          <conf-date>19&#x2013;23 October 2020</conf-date>
+          <fpage>1025</fpage>
+          <lpage>1034</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B28-sensors-23-00841">
+        <label>28.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Song</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Lin</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Guo</surname>
+              <given-names>S.</given-names>
+            </name>
+            <name>
+              <surname>Wan</surname>
+              <given-names>H.</given-names>
+            </name>
+          </person-group>
+          <article-title>Spatial-temporal synchronous graph convolutional networks: A new framework for spatial-temporal network data forecasting</article-title>
+          <source>Proceedings of the AAAI Conference on Artificial Intelligence</source>
+          <conf-loc>New York, NY, USA</conf-loc>
+          <conf-date>7&#x2013;12 February 2020</conf-date>
+          <volume>Volume 34</volume>
+          <fpage>914</fpage>
+          <lpage>921</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B29-sensors-23-00841">
+        <label>29.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Bai</surname>
+              <given-names>L.</given-names>
+            </name>
+            <name>
+              <surname>Yao</surname>
+              <given-names>L.</given-names>
+            </name>
+            <name>
+              <surname>Li</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Wang</surname>
+              <given-names>X.</given-names>
+            </name>
+            <name>
+              <surname>Wang</surname>
+              <given-names>C.</given-names>
+            </name>
+          </person-group>
+          <article-title>Adaptive graph convolutional recurrent network for traffic forecasting</article-title>
+          <source>Adv. Neural Inf. Process. Syst.</source>
+          <year>2020</year>
+          <volume>33</volume>
+          <fpage>17804</fpage>
+          <lpage>17815</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B30-sensors-23-00841">
+        <label>30.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Guo</surname>
+              <given-names>S.</given-names>
+            </name>
+            <name>
+              <surname>Lin</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Feng</surname>
+              <given-names>N.</given-names>
+            </name>
+            <name>
+              <surname>Song</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Wan</surname>
+              <given-names>H.</given-names>
+            </name>
+          </person-group>
+          <article-title>Attention based spatial-temporal graph convolutional networks for traffic flow forecasting</article-title>
+          <source>Proceedings of the AAAI conference on Artificial Intelligence</source>
+          <conf-loc>Honolulu, HI, USA</conf-loc>
+          <conf-date>27 January&#x2013;1 February 2019</conf-date>
+          <volume>Volume 33</volume>
+          <fpage>922</fpage>
+          <lpage>929</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B31-sensors-23-00841">
+        <label>31.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Guo</surname>
+              <given-names>K.</given-names>
+            </name>
+            <name>
+              <surname>Hu</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Sun</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Qian</surname>
+              <given-names>S.</given-names>
+            </name>
+            <name>
+              <surname>Gao</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Yin</surname>
+              <given-names>B.</given-names>
+            </name>
+          </person-group>
+          <article-title>Hierarchical Graph Convolution Network for Traffic Forecasting</article-title>
+          <source>Proceedings of the AAAI Conference on Artificial Intelligence</source>
+          <conf-loc>Virtually</conf-loc>
+          <conf-date>2&#x2013;9 February 2021</conf-date>
+          <volume>Volume 35</volume>
+          <fpage>151</fpage>
+          <lpage>159</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B32-sensors-23-00841">
+        <label>32.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Zhang</surname>
+              <given-names>H.</given-names>
+            </name>
+            <name>
+              <surname>Zu</surname>
+              <given-names>K.</given-names>
+            </name>
+            <name>
+              <surname>Lu</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Zou</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Meng</surname>
+              <given-names>D.</given-names>
+            </name>
+          </person-group>
+          <article-title>Epsanet: An efficient pyramid split attention block on convolutional neural network</article-title>
+          <source>Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition</source>
+          <conf-loc>Nashville, TN, USA</conf-loc>
+          <conf-date>19&#x2013;25 June 2021</conf-date>
+          <fpage>1</fpage>
+          <lpage>11</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B33-sensors-23-00841">
+        <label>33.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Yu</surname>
+              <given-names>B.</given-names>
+            </name>
+            <name>
+              <surname>Yin</surname>
+              <given-names>H.</given-names>
+            </name>
+            <name>
+              <surname>Zhu</surname>
+              <given-names>Z.</given-names>
+            </name>
+          </person-group>
+          <article-title>Spatio-temporal graph convolutional networks: A deep learning framework for traffic forecasting</article-title>
+          <source>Proceedings of the Twenty-Seventh International Joint Conference on Artificial Intelligence</source>
+          <conf-loc>Stockholm, Sweden</conf-loc>
+          <conf-date>13&#x2013;19 July 2018</conf-date>
+          <fpage>3634</fpage>
+          <lpage>3640</lpage>
+        </element-citation>
+      </ref>
+      <ref id="B34-sensors-23-00841">
+        <label>34.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Tian</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Chan</surname>
+              <given-names>W.K.</given-names>
+            </name>
+          </person-group>
+          <article-title>Spatial-temporal attention wavenet: A deep learning framework for traffic prediction considering spatial-temporal dependencies</article-title>
+          <source>IET Intell. Transp. Syst.</source>
+          <year>2021</year>
+          <volume>15</volume>
+          <fpage>549</fpage>
+          <lpage>561</lpage>
+          <pub-id pub-id-type="doi">10.1049/itr2.12044</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B35-sensors-23-00841">
+        <label>35.</label>
+        <element-citation publication-type="confproc">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Li</surname>
+              <given-names>M.</given-names>
+            </name>
+            <name>
+              <surname>Zhu</surname>
+              <given-names>Z.</given-names>
+            </name>
+          </person-group>
+          <article-title>Spatial-temporal fusion graph neural networks for traffic flow forecasting</article-title>
+          <source>Proceedings of the AAAI Conference on Artificial Intelligence</source>
+          <conf-loc>Virtually</conf-loc>
+          <conf-date>2&#x2013;9 February 2021</conf-date>
+          <volume>Volume 35</volume>
+          <fpage>4189</fpage>
+          <lpage>4196</lpage>
+        </element-citation>
+      </ref>
+    </ref-list>
+    <sec sec-type="display-objects">
+      <title>Figures and Tables</title>
+      <fig id="sensors-23-00841-f001" position="float">
+        <label>Figure 1</label>
+        <caption>
+          <p>An example of the traffic flow system; (<bold>a</bold>) An example of the traffic flow system in at 8:00 a.m.; (<bold>b</bold>) Dynamic spatial dependency.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="sensors-23-00841-g001.tif"/>
+      </fig>
+      <fig id="sensors-23-00841-f002" position="float">
+        <label>Figure 2</label>
+        <caption>
+          <p>The model structure of MD-GCN.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="sensors-23-00841-g002.tif"/>
+      </fig>
+      <fig id="sensors-23-00841-f003" position="float">
+        <label>Figure 3</label>
+        <caption>
+          <p>The model structure of MGTCN.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="sensors-23-00841-g003.tif"/>
+      </fig>
+      <fig id="sensors-23-00841-f004" position="float">
+        <label>Figure 4</label>
+        <caption>
+          <p>The model structure of MGCN.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="sensors-23-00841-g004.tif"/>
+      </fig>
+      <fig id="sensors-23-00841-f005" position="float">
+        <label>Figure 5</label>
+        <caption>
+          <p>The training and validation error curves of the MD-GCN model on two datasets. (<bold>a</bold>) MD-GCN training and validating errors on the METR-LA dataset; (<bold>b</bold>) MD-GCN training and validating errors on the PEMS-BAY dataset.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="sensors-23-00841-g005.tif"/>
+      </fig>
+      <fig id="sensors-23-00841-f006" position="float">
+        <label>Figure 6</label>
+        <caption>
+          <p>The training and validation error curves of the MD-GCN model on two datasets. (<bold>a</bold>) MD-GCN training and validating errors on the PEMS04 dataset; (<bold>b</bold>) MD-GCN training and validating errors on the PEMS08 dataset.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="sensors-23-00841-g006.tif"/>
+      </fig>
+      <fig id="sensors-23-00841-f007" position="float">
+        <label>Figure 7</label>
+        <caption>
+          <p>Study of model parameters on METR-LA; (<bold>a</bold>) the error of the parameter <inline-formula><mml:math id="mm98"><mml:semantics><mml:mi>&#x3BB;</mml:mi></mml:semantics></mml:math></inline-formula> at different values; (<bold>b</bold>) errors at different values of the number of layers of the spatial block.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="sensors-23-00841-g007.tif"/>
+      </fig>
+      <fig id="sensors-23-00841-f008" position="float">
+        <label>Figure 8</label>
+        <caption>
+          <p>Comparison of each step error of all models on dataset METR-LA: (<bold>a</bold>) MAE; (<bold>b</bold>) RMSE.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="sensors-23-00841-g008.tif"/>
+      </fig>
+      <fig id="sensors-23-00841-f009" position="float">
+        <label>Figure 9</label>
+        <caption>
+          <p>Comparison of each step error of all models on dataset PEMS08: (<bold>a</bold>) MAE; (<bold>b</bold>) RMSE.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="sensors-23-00841-g009.tif"/>
+      </fig>
+      <fig id="sensors-23-00841-f010" position="float">
+        <label>Figure 10</label>
+        <caption>
+          <p>Experimental results of different ablation modules: (<bold>a</bold>) METR-LA; (<bold>b</bold>) PMES-BAY.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="sensors-23-00841-g010.tif"/>
+      </fig>
+      <fig id="sensors-23-00841-f011" position="float">
+        <label>Figure 11</label>
+        <caption>
+          <p>Experimental results of different ablation modules: (<bold>a</bold>) PMES04; (<bold>b</bold>) PMES08.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="sensors-23-00841-g011.tif"/>
+      </fig>
+      <fig id="sensors-23-00841-f012" position="float">
+        <label>Figure 12</label>
+        <caption>
+          <p>Traffic speed case study of two different stations on the METR-LA dataset: (<bold>a</bold>) sensor 1; (<bold>b</bold>) sensor 2.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="sensors-23-00841-g012.tif"/>
+      </fig>
+      <fig id="sensors-23-00841-f013" position="float">
+        <label>Figure 13</label>
+        <caption>
+          <p>Traffic speed case study of two different stations on the PEMS-BAY dataset: (<bold>a</bold>) sensor 1; (<bold>b</bold>) sensor 2.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="sensors-23-00841-g013.tif"/>
+      </fig>
+      <table-wrap id="sensors-23-00841-t001" position="float">
+        <object-id pub-id-type="pii">sensors-23-00841-t001_Table 1</object-id>
+        <label>Table 1</label>
+        <caption>
+          <p>The details of the datasets.</p>
+        </caption>
+        <table>
+          <thead>
+            <tr>
+              <th align="center" valign="middle" style="border-bottom:solid thin;border-top:solid thin">Type</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin;border-top:solid thin">Dataset</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin;border-top:solid thin">Sensor (Nodes)</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin;border-top:solid thin">Edges</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin;border-top:solid thin">Time Step</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="center" valign="middle">Speed</td>
+              <td align="center" valign="middle">METR-LA</td>
+              <td align="center" valign="middle">207</td>
+              <td align="center" valign="middle">1722</td>
+              <td align="center" valign="middle">34,272</td>
+            </tr>
+            <tr>
+              <td align="center" valign="middle">Speed</td>
+              <td align="center" valign="middle">PMES-BAY</td>
+              <td align="center" valign="middle">325</td>
+              <td align="center" valign="middle">2694</td>
+              <td align="center" valign="middle">52,116</td>
+            </tr>
+            <tr>
+              <td align="center" valign="middle">Flow</td>
+              <td align="center" valign="middle">PEMS04</td>
+              <td align="center" valign="middle">307</td>
+              <td align="center" valign="middle">680</td>
+              <td align="center" valign="middle">16,992</td>
+            </tr>
+            <tr>
+              <td align="center" valign="middle" style="border-bottom:solid thin">Flow</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">PEMS08</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">170</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">548</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">17,856</td>
+            </tr>
+          </tbody>
+        </table>
+      </table-wrap>
+      <table-wrap id="sensors-23-00841-t002" position="float">
+        <object-id pub-id-type="pii">sensors-23-00841-t002_Table 2</object-id>
+        <label>Table 2</label>
+        <caption>
+          <p>The details of the parameter setting.</p>
+        </caption>
+        <table>
+          <thead>
+            <tr>
+              <th align="center" valign="middle" style="border-bottom:solid thin;border-top:solid thin">Parameters</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin;border-top:solid thin">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="center" valign="middle">Input length (S)</td>
+              <td align="center" valign="middle">12</td>
+            </tr>
+            <tr>
+              <td align="center" valign="middle">Output length (T)</td>
+              <td align="center" valign="middle">12</td>
+            </tr>
+            <tr>
+              <td align="center" valign="middle">Spatial&#x2013;temporal block (N)</td>
+              <td align="center" valign="middle">3</td>
+            </tr>
+            <tr>
+              <td align="center" valign="middle">Temporal block (K)</td>
+              <td align="center" valign="middle">3</td>
+            </tr>
+            <tr>
+              <td align="center" valign="middle">Spatial block (L)</td>
+              <td align="center" valign="middle">2</td>
+            </tr>
+            <tr>
+              <td align="center" valign="middle">Hidden layers</td>
+              <td align="center" valign="middle">64</td>
+            </tr>
+            <tr>
+              <td align="center" valign="middle">Batch Size</td>
+              <td align="center" valign="middle">32</td>
+            </tr>
+            <tr>
+              <td align="center" valign="middle" style="border-bottom:solid thin">Optimizer</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">adam</td>
+            </tr>
+          </tbody>
+        </table>
+      </table-wrap>
+      <table-wrap id="sensors-23-00841-t003" position="float">
+        <object-id pub-id-type="pii">sensors-23-00841-t003_Table 3</object-id>
+        <label>Table 3</label>
+        <caption>
+          <p>The comparative results on METR-LA.</p>
+        </caption>
+        <table>
+          <thead>
+            <tr>
+              <th align="center" valign="middle" style="border-top:solid thin"> </th>
+              <th colspan="3" align="center" valign="middle" style="border-top:solid thin;border-bottom:solid thin">Horizon 3</th>
+              <th colspan="3" align="center" valign="middle" style="border-top:solid thin;border-bottom:solid thin">Horizon 6</th>
+              <th colspan="3" align="center" valign="middle" style="border-top:solid thin;border-bottom:solid thin">Horizon 12</th>
+            </tr>
+            <tr>
+              <th align="left" valign="middle" style="border-bottom:solid thin">Method</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">RMSE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAPE (%)</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">RMSE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAPE (%)</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">RMSE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAPE (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" valign="middle">FC-LSTM</td>
+              <td align="center" valign="middle">3.44</td>
+              <td align="center" valign="middle">6.30</td>
+              <td align="center" valign="middle">9.60</td>
+              <td align="center" valign="middle">3.77</td>
+              <td align="center" valign="middle">7.23</td>
+              <td align="center" valign="middle">10.09</td>
+              <td align="center" valign="middle">4.37</td>
+              <td align="center" valign="middle">8.69</td>
+              <td align="center" valign="middle">14.00</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">T-GCN</td>
+              <td align="center" valign="middle">3.03</td>
+              <td align="center" valign="middle">5.26</td>
+              <td align="center" valign="middle">7.81</td>
+              <td align="center" valign="middle">3.52</td>
+              <td align="center" valign="middle">6.12</td>
+              <td align="center" valign="middle">9.45</td>
+              <td align="center" valign="middle">4.30</td>
+              <td align="center" valign="middle">7.31</td>
+              <td align="center" valign="middle">11.80</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">DCRNN</td>
+              <td align="center" valign="middle">2.77</td>
+              <td align="center" valign="middle">5.38</td>
+              <td align="center" valign="middle">7.30</td>
+              <td align="center" valign="middle">3.15</td>
+              <td align="center" valign="middle">6.45</td>
+              <td align="center" valign="middle">8.80</td>
+              <td align="center" valign="middle">3.60</td>
+              <td align="center" valign="middle">7.60</td>
+              <td align="center" valign="middle">10.50</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">STGCN</td>
+              <td align="center" valign="middle">2.88</td>
+              <td align="center" valign="middle">5.74</td>
+              <td align="center" valign="middle">9.21</td>
+              <td align="center" valign="middle">3.47</td>
+              <td align="center" valign="middle">7.24</td>
+              <td align="center" valign="middle">9.57</td>
+              <td align="center" valign="middle">4.59</td>
+              <td align="center" valign="middle">9.40</td>
+              <td align="center" valign="middle">12.70</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">ASTGCN</td>
+              <td align="center" valign="middle">4.86</td>
+              <td align="center" valign="middle">9.27</td>
+              <td align="center" valign="middle">7.81</td>
+              <td align="center" valign="middle">5.43</td>
+              <td align="center" valign="middle">10.61</td>
+              <td align="center" valign="middle">10.13</td>
+              <td align="center" valign="middle">6.51</td>
+              <td align="center" valign="middle">12.52</td>
+              <td align="center" valign="middle">11.64</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">STSGCN</td>
+              <td align="center" valign="middle">3.31</td>
+              <td align="center" valign="middle">7.62</td>
+              <td align="center" valign="middle">8.06</td>
+              <td align="center" valign="middle">4.13</td>
+              <td align="center" valign="middle">9.77</td>
+              <td align="center" valign="middle">10.29</td>
+              <td align="center" valign="middle">5.06</td>
+              <td align="center" valign="middle">11.66</td>
+              <td align="center" valign="middle">12.91</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">Graph WaveNet</td>
+              <td align="center" valign="middle">2.69</td>
+              <td align="center" valign="middle">5.15</td>
+              <td align="center" valign="middle">6.90</td>
+              <td align="center" valign="middle">3.07</td>
+              <td align="center" valign="middle">6.22</td>
+              <td align="center" valign="middle">8.37</td>
+              <td align="center" valign="middle">3.53</td>
+              <td align="center" valign="middle">7.37</td>
+              <td align="center" valign="middle">10.01</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">MTGNN</td>
+              <td align="center" valign="middle">2.69</td>
+              <td align="center" valign="middle">5.18</td>
+              <td align="center" valign="middle">6.86</td>
+              <td align="center" valign="middle">3.05</td>
+              <td align="center" valign="middle">6.17</td>
+              <td align="center" valign="middle">8.19</td>
+              <td align="center" valign="middle">3.49</td>
+              <td align="center" valign="middle">7.23</td>
+              <td align="center" valign="middle">9.87</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle" style="border-bottom:solid thin">MD-GCN (Ours)</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">2.65</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">5.09</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">6.82</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">2.99</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">6.06</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">8.19</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">3.43</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">7.15</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">10.04</td>
+            </tr>
+          </tbody>
+        </table>
+      </table-wrap>
+      <table-wrap id="sensors-23-00841-t004" position="float">
+        <object-id pub-id-type="pii">sensors-23-00841-t004_Table 4</object-id>
+        <label>Table 4</label>
+        <caption>
+          <p>The comparative results on PEMS-BAY.</p>
+        </caption>
+        <table>
+          <thead>
+            <tr>
+              <th align="center" valign="middle" style="border-top:solid thin"> </th>
+              <th colspan="3" align="center" valign="middle" style="border-top:solid thin;border-bottom:solid thin">Horizon 3</th>
+              <th colspan="3" align="center" valign="middle" style="border-top:solid thin;border-bottom:solid thin">Horizon 6</th>
+              <th colspan="3" align="center" valign="middle" style="border-top:solid thin;border-bottom:solid thin">Horizon 12</th>
+            </tr>
+            <tr>
+              <th align="left" valign="middle" style="border-bottom:solid thin">Method</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">RMSE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAPE (%)</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">RMSE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAPE (%)</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">RMSE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAPE (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" valign="middle">FC-LSTM</td>
+              <td align="center" valign="middle">2.05</td>
+              <td align="center" valign="middle">4.19</td>
+              <td align="center" valign="middle">4.80</td>
+              <td align="center" valign="middle">2.20</td>
+              <td align="center" valign="middle">4.55</td>
+              <td align="center" valign="middle">5.20</td>
+              <td align="center" valign="middle">2.37</td>
+              <td align="center" valign="middle">4.96</td>
+              <td align="center" valign="middle">5.70</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">T-GCN</td>
+              <td align="center" valign="middle">1.50</td>
+              <td align="center" valign="middle">2.83</td>
+              <td align="center" valign="middle">3.14</td>
+              <td align="center" valign="middle">1.73</td>
+              <td align="center" valign="middle">3.40</td>
+              <td align="center" valign="middle">3.76</td>
+              <td align="center" valign="middle">2.18</td>
+              <td align="center" valign="middle">4.35</td>
+              <td align="center" valign="middle">4.94</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">DCRNN</td>
+              <td align="center" valign="middle">1.38</td>
+              <td align="center" valign="middle">2.95</td>
+              <td align="center" valign="middle">2.90</td>
+              <td align="center" valign="middle">1.74</td>
+              <td align="center" valign="middle">3.97</td>
+              <td align="center" valign="middle">3.90</td>
+              <td align="center" valign="middle">2.07</td>
+              <td align="center" valign="middle">4.74</td>
+              <td align="center" valign="middle">4.90</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">STGCN</td>
+              <td align="center" valign="middle">1.36</td>
+              <td align="center" valign="middle">2.96</td>
+              <td align="center" valign="middle">2.90</td>
+              <td align="center" valign="middle">1.81</td>
+              <td align="center" valign="middle">4.27</td>
+              <td align="center" valign="middle">4.17</td>
+              <td align="center" valign="middle">2.49</td>
+              <td align="center" valign="middle">5.69</td>
+              <td align="center" valign="middle">5.79</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">ASTGCN</td>
+              <td align="center" valign="middle">1.52</td>
+              <td align="center" valign="middle">3.13</td>
+              <td align="center" valign="middle">3.22</td>
+              <td align="center" valign="middle">2.01</td>
+              <td align="center" valign="middle">4.27</td>
+              <td align="center" valign="middle">4.28</td>
+              <td align="center" valign="middle">2.61</td>
+              <td align="center" valign="middle">5.42</td>
+              <td align="center" valign="middle">6.00</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">STSGCN</td>
+              <td align="center" valign="middle">1.44</td>
+              <td align="center" valign="middle">3.01</td>
+              <td align="center" valign="middle">3.04</td>
+              <td align="center" valign="middle">1.83</td>
+              <td align="center" valign="middle">4.18</td>
+              <td align="center" valign="middle">4.17</td>
+              <td align="center" valign="middle">2.26</td>
+              <td align="center" valign="middle">5.21</td>
+              <td align="center" valign="middle">5.40</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">Graph WaveNet</td>
+              <td align="center" valign="middle">1.30</td>
+              <td align="center" valign="middle">2.74</td>
+              <td align="center" valign="middle">2.73</td>
+              <td align="center" valign="middle">1.63</td>
+              <td align="center" valign="middle">3.70</td>
+              <td align="center" valign="middle">3.67</td>
+              <td align="center" valign="middle">1.95</td>
+              <td align="center" valign="middle">4.52</td>
+              <td align="center" valign="middle">4.63</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">MTGNN</td>
+              <td align="center" valign="middle">1.32</td>
+              <td align="center" valign="middle">2.79</td>
+              <td align="center" valign="middle">2.77</td>
+              <td align="center" valign="middle">1.65</td>
+              <td align="center" valign="middle">3.74</td>
+              <td align="center" valign="middle">3.69</td>
+              <td align="center" valign="middle">1.94</td>
+              <td align="center" valign="middle">4.49</td>
+              <td align="center" valign="middle">4.53</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle" style="border-bottom:solid thin">MD-GCN(Ours)</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">1.32</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">2.81</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">2.77</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">1.64</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">2.71</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">3.66</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">1.92</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">4.40</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">4.45</td>
+            </tr>
+          </tbody>
+        </table>
+      </table-wrap>
+      <table-wrap id="sensors-23-00841-t005" position="float">
+        <object-id pub-id-type="pii">sensors-23-00841-t005_Table 5</object-id>
+        <label>Table 5</label>
+        <caption>
+          <p>The comparative results on PEMS04 and PEMS08.</p>
+        </caption>
+        <table>
+          <thead>
+            <tr>
+              <th align="center" valign="middle" style="border-top:solid thin"> </th>
+              <th colspan="3" align="center" valign="middle" style="border-top:solid thin;border-bottom:solid thin">PMES04 (Mean)</th>
+              <th colspan="3" align="center" valign="middle" style="border-top:solid thin;border-bottom:solid thin">PMES08 (Mean)</th>
+            </tr>
+            <tr>
+              <th align="left" valign="middle" style="border-bottom:solid thin">Method</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">RMSE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAPE (%)</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">RMSE</th>
+              <th align="center" valign="middle" style="border-bottom:solid thin">MAPE (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" valign="middle">FC-LSTM</td>
+              <td align="center" valign="middle">27.14</td>
+              <td align="center" valign="middle">41.59</td>
+              <td align="center" valign="middle">18.20</td>
+              <td align="center" valign="middle">2.20</td>
+              <td align="center" valign="middle">22.20</td>
+              <td align="center" valign="middle">34.06</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">T-GCN</td>
+              <td align="center" valign="middle">21.34</td>
+              <td align="center" valign="middle">32.35</td>
+              <td align="center" valign="middle">14.42</td>
+              <td align="center" valign="middle">17.86</td>
+              <td align="center" valign="middle">26.12</td>
+              <td align="center" valign="middle">10.76</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">DCRNN</td>
+              <td align="center" valign="middle">22.16</td>
+              <td align="center" valign="middle">34.22</td>
+              <td align="center" valign="middle">14.83</td>
+              <td align="center" valign="middle">17.86</td>
+              <td align="center" valign="middle">27.83</td>
+              <td align="center" valign="middle">11.45</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">STGCN</td>
+              <td align="center" valign="middle">22.70</td>
+              <td align="center" valign="middle">35.55</td>
+              <td align="center" valign="middle">14.59</td>
+              <td align="center" valign="middle">18.02</td>
+              <td align="center" valign="middle">27.83</td>
+              <td align="center" valign="middle">11.40</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">ASTGCN</td>
+              <td align="center" valign="middle">22.93</td>
+              <td align="center" valign="middle">35.22</td>
+              <td align="center" valign="middle">16.56</td>
+              <td align="center" valign="middle">18.61</td>
+              <td align="center" valign="middle">28.16</td>
+              <td align="center" valign="middle">13.08</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">STSGCN</td>
+              <td align="center" valign="middle">21.19</td>
+              <td align="center" valign="middle">33.65</td>
+              <td align="center" valign="middle">13.90</td>
+              <td align="center" valign="middle">17.13</td>
+              <td align="center" valign="middle">26.80</td>
+              <td align="center" valign="middle">10.96</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">Graph WaveNet</td>
+              <td align="center" valign="middle">25.45</td>
+              <td align="center" valign="middle">39.70</td>
+              <td align="center" valign="middle">17.29</td>
+              <td align="center" valign="middle">19.83</td>
+              <td align="center" valign="middle">31.05</td>
+              <td align="center" valign="middle">12.68</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">STFGNN</td>
+              <td align="center" valign="middle">19.83</td>
+              <td align="center" valign="middle">31.88</td>
+              <td align="center" valign="middle">13.02</td>
+              <td align="center" valign="middle">16.64</td>
+              <td align="center" valign="middle">26.22</td>
+              <td align="center" valign="middle">10.60</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle">MTGNN</td>
+              <td align="center" valign="middle">19.90</td>
+              <td align="center" valign="middle">31.73</td>
+              <td align="center" valign="middle">13.46</td>
+              <td align="center" valign="middle">16.55</td>
+              <td align="center" valign="middle">25.48</td>
+              <td align="center" valign="middle">10.50</td>
+            </tr>
+            <tr>
+              <td align="left" valign="middle" style="border-bottom:solid thin">MD-GCN(Ours)</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">19.47</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">30.96</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">13.33</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">15.62</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">24.36</td>
+              <td align="center" valign="middle" style="border-bottom:solid thin">10.26</td>
+            </tr>
+          </tbody>
+        </table>
+      </table-wrap>
+    </sec>
+    <fn-group>
+      <fn>
+        <p><bold>Disclaimer/Publisher&#x2019;s Note:</bold> The statements, opinions and data contained in all publications are solely those of the individual author(s) and contributor(s) and not of MDPI and/or the editor(s). MDPI and/or the editor(s) disclaim responsibility for any injury to people or property resulting from any ideas, methods, instructions or products referred to in the content.</p>
+      </fn>
+    </fn-group>
+  </back>
+</article>
