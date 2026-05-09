@@ -248,6 +248,7 @@ Per SRS §7, the processor sweeps old rows on a configurable interval
 | GET | `/metrics/current?camera_id=X` | Latest metrics for a camera |
 | GET | `/metrics/history?camera_id=X&from=T1&to=T2` | Historical metrics |
 | GET | `/congestion/current` | Current congestion for all cameras |
+| GET | `/api/predict/congestion?camera_id=X&horizon_minutes=N` | Short-term congestion forecast (EWMA + trend baseline) |
 | GET | `/health` | Liveness probe (checks Kafka + Postgres) |
 | GET | `/metrics` | Prometheus scrape endpoint (b2-api on :18001) |
 | WS | `/ws/metrics[?camera_id=X]` | Live camera-wide updates (every 5s); optional camera filter |
