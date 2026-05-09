@@ -11,3 +11,5 @@ data/training.db-journal
 
 # Trainer log
 train.log
+
+# Note: checkpoints/best_model.pt is committed (it is the demo artifact).

@@ -59,6 +59,40 @@ checkpoint is written to `checkpoints/best_model.pt`.
 python scripts/predict.py --checkpoint checkpoints/best_model.pt
 ```
 
+### Reference run — results from one training pass
+
+Run on a 2024 M-series Mac (`--device mps`), 25 epochs, ~23 minutes wall:
+
+| Phase | Metric | Value |
+|---|---|---|
+| Train | final loss | 0.2620 |
+| Val   | final loss | 0.2607 |
+| Test  | vehicle-count MAE (normalised) | 0.038 |
+| Test  | vehicle-count RMSE (normalised) | 0.060 |
+| Test  | binary congestion probability accuracy | **75.2 %** |
+| Test  | 3-class congestion level accuracy | **91.5 %** |
+
+Validation loss curve (selected epochs):
+
+```
+epoch  1   val=0.2908   train=0.3542
+epoch  5   val=0.2750   train=0.2801
+epoch 10   val=0.2705   train=0.2727
+epoch 15   val=0.2645   train=0.2672
+epoch 20   val=0.2618   train=0.2637
+epoch 25   val=0.2607   train=0.2620   ← best, restored before testing
+```
+
+Notes:
+
+- `count_mape` is logged but is not reported above. Many normalised
+  vehicle-count targets are close to zero (free-flow lanes), which blows
+  up percentage error; MAE/RMSE on the normalised counts are the meaningful
+  numbers for this dataset.
+- The committed checkpoint at `checkpoints/best_model.pt` (~3.7 MB) is the
+  artifact produced by this exact run. Re-running `scripts/train.py` will
+  overwrite it.
+
 ### Reusing the trained model for live serving
 
 The B2 API currently serves an EWMA + linear-trend baseline at
