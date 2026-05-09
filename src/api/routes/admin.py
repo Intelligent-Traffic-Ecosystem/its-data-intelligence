@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from api.event_bus import bus
 from api.websocket import manager
 from shared.config import settings
 from shared.db import get_db
@@ -284,6 +285,9 @@ async def broadcast_notification(
     }
 
     await manager.broadcast_to_operators(message)
+
+    # Also fan-out via the unified /ws/events channel (#35).
+    bus.publish("admin_broadcast", message)
 
     _log_audit(
         db,

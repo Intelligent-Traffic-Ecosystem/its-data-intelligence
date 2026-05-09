@@ -152,6 +152,12 @@ websocat 'ws://localhost:18001/ws/metrics?camera_id=cam_01'
 
 # per-lane breakdowns for one camera
 websocat 'ws://localhost:18001/ws/metrics/lanes?camera_id=cam_01'
+
+# unified real-time event channel (#35) — typed envelopes:
+#   traffic_metrics_update (5s), heatmap_update (10s),
+#   new_alert (instant on HIGH/SEVERE), admin_broadcast.
+websocat ws://localhost:18001/ws/events
+websocat 'ws://localhost:18001/ws/events?types=new_alert,admin_broadcast'
 ```
 
 ### 11 — Prometheus metrics (two endpoints)
