@@ -1,10 +1,12 @@
 import asyncio
 import json
 import logging
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy import func, select
 
+from api.event_bus import bus
 from shared.config import settings
 from shared.db import SessionLocal
 from shared.models import TrafficMetric
@@ -216,3 +218,161 @@ async def websocket_lane_metrics(
             await asyncio.sleep(settings.ws_broadcast_interval)
     except WebSocketDisconnect:
         manager.disconnect(ws)
+
+
+# ---------------------------------------------------------------------------
+# Unified real-time event channel (issue #35)
+# ---------------------------------------------------------------------------
+
+ALERT_LEVELS = {"HIGH", "SEVERE", "CRITICAL", "EMERGENCY"}
+
+
+def _heatmap_snapshot(minutes: int = 5) -> list[dict]:
+    """Per-camera congestion intensity over the last ``minutes`` minutes."""
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=minutes)
+    db = SessionLocal()
+    try:
+        stmt = (
+            select(
+                TrafficMetric.camera_id,
+                func.avg(TrafficMetric.congestion_score).label("score"),
+                func.avg(TrafficMetric.vehicle_count).label("avg_count"),
+            )
+            .where(
+                TrafficMetric.lane_id.is_(None),
+                TrafficMetric.window_start >= cutoff,
+            )
+            .group_by(TrafficMetric.camera_id)
+        )
+        return [
+            {
+                "camera_id": r.camera_id,
+                "intensity": round(float(r.score or 0.0), 4),
+                "avg_vehicle_count": round(float(r.avg_count or 0.0), 2),
+            }
+            for r in db.execute(stmt).all()
+        ]
+    finally:
+        db.close()
+
+
+def _scan_new_alerts(seen: set[tuple]) -> list[dict]:
+    """Return alert payloads for cameras whose latest metric flipped to HIGH+.
+
+    ``seen`` carries (camera_id, window_start) pairs we've already alerted on
+    so we never re-emit the same alert for the same window.
+    """
+    metrics = _fetch_latest_metrics()
+    fresh: list[dict] = []
+    for m in metrics:
+        if m["congestion_level"] not in ALERT_LEVELS:
+            continue
+        key = (m["camera_id"], m["window_start"])
+        if key in seen:
+            continue
+        seen.add(key)
+        fresh.append(
+            {
+                "camera_id": m["camera_id"],
+                "severity": m["congestion_level"],
+                "score": m["congestion_score"],
+                "vehicle_count": m["vehicle_count"],
+                "window_end": m["window_end"],
+            }
+        )
+    return fresh
+
+
+async def _metrics_producer() -> None:
+    """Push traffic_metrics_update every 5s (per #35 spec)."""
+    while True:
+        try:
+            data = _fetch_latest_metrics()
+            if data:
+                bus.publish("traffic_metrics_update", data)
+        except Exception:
+            logger.exception("metrics_producer_failed")
+        await asyncio.sleep(5)
+
+
+async def _heatmap_producer() -> None:
+    """Push heatmap_update every 10s (per #35 spec)."""
+    while True:
+        try:
+            points = _heatmap_snapshot()
+            if points:
+                bus.publish("heatmap_update", points)
+        except Exception:
+            logger.exception("heatmap_producer_failed")
+        await asyncio.sleep(10)
+
+
+async def _alerts_producer() -> None:
+    """Detect new HIGH/SEVERE windows and push new_alert events.
+
+    Polls at 2s; alerts are emitted at most once per (camera, window).
+    """
+    seen: set[tuple] = set()
+    while True:
+        try:
+            for alert in _scan_new_alerts(seen):
+                bus.publish("new_alert", alert)
+        except Exception:
+            logger.exception("alerts_producer_failed")
+        # Cap memory: keep only last 5k entries (~7 hours at 5s windows / cam).
+        if len(seen) > 5000:
+            seen = set(list(seen)[-2500:])
+        await asyncio.sleep(2)
+
+
+_producer_tasks: list[asyncio.Task] = []
+
+
+def start_event_producers() -> None:
+    """Spawn the background producer tasks. Idempotent."""
+    if _producer_tasks:
+        return
+    loop = asyncio.get_event_loop()
+    _producer_tasks.append(loop.create_task(_metrics_producer()))
+    _producer_tasks.append(loop.create_task(_heatmap_producer()))
+    _producer_tasks.append(loop.create_task(_alerts_producer()))
+    logger.info("event_producers_started count=%d", len(_producer_tasks))
+
+
+@router.websocket("/ws/events")
+async def websocket_events(
+    ws: WebSocket,
+    types: str | None = Query(
+        None,
+        description="Comma-separated event types to subscribe to. "
+        "Defaults to all: traffic_metrics_update,heatmap_update,new_alert,admin_broadcast",
+    ),
+):
+    """Unified real-time event channel (issue #35).
+
+    Streams JSON envelopes ``{event, ts, data}`` for:
+
+    - ``traffic_metrics_update`` — every 5s, latest camera-wide metrics.
+    - ``heatmap_update`` — every 10s, rolling 5-min congestion heatmap.
+    - ``new_alert`` — instant push when a camera flips to HIGH/SEVERE.
+    - ``admin_broadcast`` — pushed by the admin notification endpoint.
+    """
+    await ws.accept()
+
+    requested: set[str] | None = None
+    if types:
+        requested = {t.strip() for t in types.split(",") if t.strip()}
+
+    queue = bus.subscribe()
+    try:
+        while True:
+            envelope = await queue.get()
+            if requested and envelope["event"] not in requested:
+                continue
+            await ws.send_text(json.dumps(envelope))
+    except WebSocketDisconnect:
+        pass
+    except Exception:
+        logger.exception("ws_events_send_failed")
+    finally:
+        bus.unsubscribe(queue)

@@ -19,7 +19,7 @@ from api.routes import (
     health,
     metrics,
 )
-from api.websocket import router as ws_router
+from api.websocket import router as ws_router, start_event_producers
 from shared.db import SessionLocal, engine
 from shared.logging_setup import configure_logging
 from shared.models import Base
@@ -35,6 +35,8 @@ async def lifespan(app: FastAPI):
     # Load admin thresholds from database
     with SessionLocal() as db:
         load_thresholds_from_db(db)
+    # Spawn real-time event producers (#35)
+    start_event_producers()
     yield
 
 
