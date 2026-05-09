@@ -18,6 +18,7 @@ from api.routes import (
     dashboard,
     health,
     metrics,
+    predict,
 )
 from api.websocket import router as ws_router, start_event_producers
 from shared.db import SessionLocal, engine
@@ -75,5 +76,6 @@ app.include_router(health.router, tags=["health"])
 app.include_router(alerts.router, tags=["alerts"])
 app.include_router(analytics.router, tags=["analytics"])
 app.include_router(admin.router, tags=["admin"])
+app.include_router(predict.router)
 app.include_router(ws_router)
 app.include_router(prom_router)
