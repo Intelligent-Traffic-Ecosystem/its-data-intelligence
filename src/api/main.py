@@ -9,7 +9,16 @@ from api.prometheus import (
     REQUEST_LATENCY,
 )
 from api.prometheus import router as prom_router
-from api.routes import admin, alerts, analytics, cameras, congestion, health, metrics
+from api.routes import (
+    admin,
+    alerts,
+    analytics,
+    cameras,
+    congestion,
+    dashboard,
+    health,
+    metrics,
+)
 from api.websocket import router as ws_router
 from shared.db import SessionLocal, engine
 from shared.logging_setup import configure_logging
@@ -59,6 +68,7 @@ async def prometheus_middleware(request: Request, call_next):
 app.include_router(cameras.router, tags=["cameras"])
 app.include_router(metrics.router, tags=["metrics"])
 app.include_router(congestion.router, tags=["congestion"])
+app.include_router(dashboard.router, tags=["dashboard"])
 app.include_router(health.router, tags=["health"])
 app.include_router(alerts.router, tags=["alerts"])
 app.include_router(analytics.router, tags=["analytics"])
