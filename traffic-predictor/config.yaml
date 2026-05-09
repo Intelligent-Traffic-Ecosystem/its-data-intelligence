@@ -3,7 +3,9 @@
 # ==============================================================================
 
 database:
-  url: "postgresql://user:pass@localhost:5432/traffic"
+  # Default points to the SQLite training DB produced by scripts/import_pems04.py.
+  # In production, override with STGCN_DATABASE__URL=postgresql://...
+  url: "sqlite:///./data/training.db"
   pool_size: 5
   max_overflow: 10
 
@@ -21,25 +23,23 @@ kafka:
 # Cross-camera edges can be defined explicitly under cross_camera_edges.
 # ---------------------------------------------------------------------------
 topology:
+  # Topology mirrors the PEMS04 subset chosen by scripts/import_pems04.py:
+  # 12 sensors arranged into 3 cameras × 4 lanes. The cross-camera edges
+  # below are the real PEMS04 freeway adjacencies between those sensors.
   cameras:
     - camera_id: "cam-001"
       lane_ids: [1, 2, 3, 4]
     - camera_id: "cam-002"
-      lane_ids: [1, 2, 3]
+      lane_ids: [1, 2, 3, 4]
     - camera_id: "cam-003"
       lane_ids: [1, 2, 3, 4]
 
-  # Optional: bidirectional cross-camera lane connections
-  # (e.g. exit lane of cam-001 feeds into entry lane of cam-002)
   cross_camera_edges:
-    - from_camera: "cam-001"
-      from_lane: 4
-      to_camera: "cam-002"
-      to_lane: 1
-    - from_camera: "cam-002"
-      from_lane: 3
-      to_camera: "cam-003"
-      to_lane: 1
+    - {from_camera: "cam-003", from_lane: 1, to_camera: "cam-001", to_lane: 1}
+    - {from_camera: "cam-003", from_lane: 4, to_camera: "cam-002", to_lane: 1}
+    - {from_camera: "cam-002", from_lane: 2, to_camera: "cam-001", to_lane: 3}
+    - {from_camera: "cam-001", from_lane: 3, to_camera: "cam-002", to_lane: 1}
+    - {from_camera: "cam-003", from_lane: 4, to_camera: "cam-002", to_lane: 4}
 
 # ---------------------------------------------------------------------------
 # Feature engineering
@@ -54,13 +54,14 @@ features:
     - hour_cos
     - dow_sin                # cyclical day-of-week encoding
     - dow_cos
-  input_window: 12           # number of past 5-s windows used as input  (= 60 s)
-  output_horizon: 360        # number of future 5-s windows to forecast  (= 30 min)
-  window_size_seconds: 5
+  # Sized for the PEMS04 5-minute cadence. 12 in × 6 out = 1h history → 30 min horizon.
+  input_window: 12           # past 5-min windows (= 1 hour history)
+  output_horizon: 6          # future 5-min windows (= 30 min forecast)
+  window_size_seconds: 300
 
   normalization:
-    vehicle_count_max: 50
-    speed_max_kmh: 60.0
+    vehicle_count_max: 700   # PEMS04 flow saturates near 700 per 5-min interval.
+    speed_max_kmh: 110.0
 
 # ---------------------------------------------------------------------------
 # ST-GCN model hyper-parameters
@@ -88,19 +89,20 @@ model:
 # Training
 # ---------------------------------------------------------------------------
 training:
-  epochs: 100
-  batch_size: 32
+  # Tuned for a CPU demo run on the PEMS04 subset (~17k timesteps).
+  epochs: 25
+  batch_size: 64
   learning_rate: 1.0e-3
   weight_decay: 1.0e-4
   lr_scheduler:
     type: "cosine"           # "cosine" | "step" | "none"
-    T_max: 100               # cosine: period; step: step_size
+    T_max: 25
     eta_min: 1.0e-5
-  early_stopping_patience: 10
+  early_stopping_patience: 6
   val_fraction: 0.15
   test_fraction: 0.10
   checkpoint_dir: "checkpoints"
-  log_interval: 10           # log every N batches
+  log_interval: 20           # log every N batches
 
 # ---------------------------------------------------------------------------
 # Inference / real-time prediction
