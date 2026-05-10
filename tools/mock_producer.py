@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 
 from kafka import KafkaProducer
 
-VEHICLE_CLASSES = ["car", "car", "car", "car", "truck", "bus", "motorcycle", "bicycle"]
+VEHICLE_CLASSES = ["car", "truck", "bus", "motorcycle", "bicycle"]
 CAMERA_IDS = ["cam_{:02d}".format(i) for i in range(1, 21)]
 KAFKA_CONNECT_RETRIES = 10
 KAFKA_CONNECT_DELAY_SECONDS = 2
@@ -79,7 +79,7 @@ def main():
     parser = argparse.ArgumentParser(description="Mock traffic event producer")
     parser.add_argument("--cameras", type=int, default=4, help="Number of cameras to simulate")
     parser.add_argument("--rate", type=float, default=10, help="Events per second (total across cameras)")
-    parser.add_argument("--brokers", type=str, default="localhost:9092", help="Kafka broker(s)")
+    parser.add_argument("--brokers", type=str, default="localhost:29094", help="Kafka broker(s)")
     parser.add_argument("--topic", type=str, default="traffic.events.raw", help="Kafka topic")
     parser.add_argument("--malformed-rate", type=float, default=0.02, help="Fraction of malformed events (0-1)")
     parser.add_argument("--with-lanes", action="store_true", help="Include lane_id on ~80%% of events")

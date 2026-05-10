@@ -17,6 +17,24 @@ try:
 except ImportError:  # pragma: no cover
     pytest.skip("testcontainers not installed", allow_module_level=True)
 
+try:
+    import docker
+except ImportError:  # pragma: no cover
+    pytest.skip("docker SDK not installed", allow_module_level=True)
+
+
+def _docker_available() -> bool:
+    try:
+        client = docker.from_env()
+        client.ping()
+        return True
+    except Exception:
+        return False
+
+
+if not _docker_available():  # pragma: no cover
+    pytest.skip("Docker daemon not available; skipping integration tests", allow_module_level=True)
+
 
 @pytest.fixture(scope="session")
 def kafka_container():

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 # --- Input event from B1 via Kafka ---
 
@@ -59,3 +59,155 @@ class HealthResponse(BaseModel):
     status: str
     kafka: str
     postgres: str
+
+
+# --- Admin controls ---
+
+
+class Thresholds(BaseModel):
+    congestion_threshold_low: float = Field(ge=0, le=1)
+    congestion_threshold_moderate: float = Field(ge=0, le=1)
+    congestion_threshold_high: float = Field(ge=0, le=1)
+
+    @model_validator(mode="after")
+    def validate_order(self):
+        if not (
+            self.congestion_threshold_low
+            <= self.congestion_threshold_moderate
+            <= self.congestion_threshold_high
+        ):
+            raise ValueError("Thresholds must satisfy low <= moderate <= high")
+        return self
+
+
+class WGS84Point(BaseModel):
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
+
+
+def _validate_polygon(points: list[WGS84Point]) -> list[WGS84Point]:
+    if len(points) < 3:
+        raise ValueError("Polygon must contain at least 3 points")
+
+    unique = {(p.lat, p.lon) for p in points}
+    if len(unique) < 3:
+        raise ValueError("Polygon must contain at least 3 distinct points")
+
+    return points
+
+
+class ZoneCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=2000)
+    coordinates: list[WGS84Point]
+
+    _validate_coordinates = field_validator("coordinates")(_validate_polygon)
+
+
+class ZoneUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=2000)
+    coordinates: list[WGS84Point]
+
+    _validate_coordinates = field_validator("coordinates")(_validate_polygon)
+
+
+class ZoneOut(BaseModel):
+    id: int
+    name: str
+    description: str | None
+    coordinates: list[dict]
+    created_at: datetime
+    updated_at: datetime
+
+
+class BroadcastNotification(BaseModel):
+    severity: str = Field(pattern="^(info|warning|critical)$")
+    title: str = Field(min_length=1, max_length=200)
+    message: str = Field(min_length=1, max_length=4000)
+
+
+# --- Alerts ---
+
+
+class AlertOutput(BaseModel):
+    alert_id: str
+    camera_id: str
+    road_segment: str
+    lane_id: int | None = None
+    alert_type: str
+    severity: str
+    message: str
+    window_start: datetime
+    window_end: datetime
+    congestion_level: str
+    congestion_score: float
+    vehicle_count: int
+    avg_speed_kmh: float
+    queue_length: int
+    acknowledged: bool
+    acknowledged_by: str | None = None
+    acknowledged_at: datetime | None = None
+
+
+class AlertAcknowledgeRequest(BaseModel):
+    admin_id: str = Field(min_length=1, max_length=200)
+
+
+class AlertAcknowledgeResponse(BaseModel):
+    alert_id: str
+    admin_id: str
+    acknowledged_at: datetime
+    status: str
+
+
+# --- Analytics ---
+
+
+class PeakHourTrend(BaseModel):
+    hour: int = Field(ge=0, le=23)
+    average_congestion: float
+    average_speed_kmh: float
+    vehicle_count: int
+
+
+class TopSegment(BaseModel):
+    camera_id: str
+    lane_id: int | None = None
+    average_congestion: float
+    average_queue_length: float
+    incident_count: int
+
+
+class IncidentSummary(BaseModel):
+    total_incidents: int
+    high: int
+    critical: int
+
+
+class AnalyticsRangeSummary(BaseModel):
+    start: datetime
+    end: datetime
+    average_congestion: float
+    vehicle_count: int
+    average_speed_kmh: float
+    incident_count: int
+    peak_hour: int | None = Field(default=None, ge=0, le=23)
+
+
+class AnalyticsMetricsResponse(BaseModel):
+    start: datetime
+    end: datetime
+    average_congestion: float
+    peak_hour_trends: list[PeakHourTrend]
+    top_segments: list[TopSegment]
+    incidents: IncidentSummary
+
+
+class AnalyticsCompareResponse(BaseModel):
+    range_a: AnalyticsRangeSummary
+    range_b: AnalyticsRangeSummary
+    congestion_delta: float
+    vehicle_count_delta: int
+    speed_delta: float
+    incident_delta: int

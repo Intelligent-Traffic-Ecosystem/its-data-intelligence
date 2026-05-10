@@ -4,8 +4,13 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
+import pytest
 
-def test_sweep_deletes_old_rows(fresh_db):
+pytest.importorskip("pyarrow")
+import pyarrow.parquet as pq
+
+
+def test_sweep_archives_and_deletes_old_rows(fresh_db, tmp_path):
     from sqlalchemy import insert, select
 
     from processor.retention import sweep
@@ -54,9 +59,25 @@ def test_sweep_deletes_old_rows(fresh_db):
     finally:
         session.close()
 
-    events_deleted, metrics_deleted = sweep(SessionLocal)
+    events_deleted, metrics_deleted = sweep(
+        SessionLocal, archive_enabled=True, archive_path=str(tmp_path)
+    )
     assert events_deleted >= 1
     assert metrics_deleted >= 1
+
+    archive_files = list(tmp_path.rglob("*.parquet"))
+    assert archive_files
+
+    assert any("camera_id=cam_R" in str(path) for path in archive_files)
+    assert any("date=" in str(path) for path in archive_files)
+
+    cam_r_file = next(path for path in archive_files if "camera_id=cam_R" in str(path))
+    table = pq.ParquetFile(cam_r_file).read()
+    archived = table.to_pylist()
+
+    assert len(archived) >= 1
+    assert archived[0]["camera_id"] == "cam_R"
+    assert archived[0]["congestion_level"] == "LOW"
 
     session = SessionLocal()
     try:

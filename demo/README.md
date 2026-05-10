@@ -19,7 +19,7 @@ The stack stays up the whole time; each person runs from their own terminal tab.
 cd services/b2-data
 docker compose up -d kafka postgres b2-stream-processor b2-api
 sleep 25                                    # wait for Kafka to fully boot
-curl -s localhost:18000/health | jq          # expect kafka=ok postgres=ok
+curl -s localhost:18001/health | jq          # expect kafka=ok postgres=ok
 ```
 
 If you have a Python venv ready for the host-side mock producer:
@@ -67,10 +67,10 @@ npm install -g wscat
 
 ```bash
 # websocat
-websocat ws://localhost:18000/ws/metrics | jq -c .
+websocat ws://localhost:18001/ws/metrics | jq -c .
 
 # wscat
-wscat -c ws://localhost:18000/ws/metrics
+wscat -c ws://localhost:18001/ws/metrics
 ```
 
 You'll see one JSON array per camera, every 5 seconds, with `vehicle_count`, `avg_speed_kmh`, `congestion_level`, `congestion_score`, `counts_by_class`, etc.
@@ -78,10 +78,18 @@ You'll see one JSON array per camera, every 5 seconds, with `vehicle_count`, `av
 ### Single camera (what B3's drill-down view subscribes to)
 
 ```bash
-websocat 'ws://localhost:18000/ws/metrics?camera_id=cam_01' | jq -c .
+websocat 'ws://localhost:18001/ws/metrics?camera_id=cam_01' | jq -c .
 ```
 
 Only `cam_01` arrives now — the SQL push-down means the server doesn't even fetch other cameras' rows.
+
+### Per-lane breakdowns (separate channel)
+
+```bash
+websocat 'ws://localhost:18001/ws/metrics/lanes?camera_id=cam_01' | jq -c .
+```
+
+Same cadence, same metric shape — but one row per lane.
 
 ### What to point at while it scrolls
 
@@ -95,5 +103,5 @@ Only `cam_01` arrives now — the SQL push-down means the server doesn't even fe
 
 If you don't want to install a client, the same data is available via the REST endpoint:
 ```bash
-watch -n 5 'curl -s localhost:18000/congestion/current | jq'
+watch -n 5 'curl -s localhost:18001/congestion/current | jq'
 ```

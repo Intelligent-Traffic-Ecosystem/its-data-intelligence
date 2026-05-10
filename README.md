@@ -1,5 +1,5 @@
 # B2 — Data & Intelligence
-
+#its-data-intelligence
 Stream processing and analytics API for the Intelligent Traffic System.
 
 ## Architecture
@@ -47,7 +47,7 @@ A step-by-step walkthrough that exercises every capability the team built. Run f
 ```bash
 cp .env.example .env
 docker compose up -d
-docker compose ps                            
+docker compose ps
 docker compose exec b2-stream-processor alembic upgrade head
 ```
 
@@ -160,6 +160,15 @@ websocat ws://localhost:18001/ws/metrics
 
 # single camera
 websocat 'ws://localhost:18001/ws/metrics?camera_id=cam_01'
+
+# per-lane breakdowns for one camera
+websocat 'ws://localhost:18001/ws/metrics/lanes?camera_id=cam_01'
+
+# unified real-time event channel (#35) — typed envelopes:
+#   traffic_metrics_update (5s), heatmap_update (10s),
+#   new_alert (instant on HIGH/SEVERE), admin_broadcast.
+websocat ws://localhost:18001/ws/events
+websocat 'ws://localhost:18001/ws/events?types=new_alert,admin_broadcast'
 ```
 
 ### 11 — Prometheus metrics (two endpoints)
@@ -201,7 +210,7 @@ Coverage:
 | Speed fallback | `--no-speed` run | tracking-based estimate when B1 omits it |
 | Kafka-aware health | `/health` while Kafka is stopped | reports `degraded`, still HTTP 200 |
 | Structured logs | `docker compose logs ... \| jq` | one JSON object per line, lib logs included |
-| Two Prometheus endpoints | `:18000/metrics`, `:9100/metrics` | API + processor instrumented |
+| Two Prometheus endpoints | `:18001/metrics`, `:9100/metrics` | API + processor instrumented |
 | WebSocket camera filter | `?camera_id=X` | B3 can subscribe to one camera |
 | Retention enforced | manual `sweep()` invocation | events 24h, metrics 30d (SRS §7) |
 | Integration tests | `make test-integration` | testcontainers Kafka + Postgres in CI |
