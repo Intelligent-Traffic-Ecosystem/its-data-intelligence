@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r requirements/api.txt
 # Copy source code
 COPY src/shared/ /app/shared/
 COPY src/api/ /app/api/
+COPY traffic-predictor/ /app/traffic-predictor/
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1

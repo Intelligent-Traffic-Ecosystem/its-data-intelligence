@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     # Processor Prometheus port
     processor_metrics_port: int = 9100
 
+    # ST-GCN (traffic-predictor) — used by GET /api/predict/congestion
+    traffic_predictor_home: str = ""
+    stgcn_config_path: str = ""
+    stgcn_checkpoint_path: str = ""
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 

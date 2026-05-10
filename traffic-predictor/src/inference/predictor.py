@@ -127,9 +127,15 @@ class TrafficPredictor:
     # Public API
     # ------------------------------------------------------------------
 
-    def predict(self) -> list[LaneForecast]:
+    def predict(self, lookback_minutes: int | None = None) -> list[LaneForecast]:
         """
         Fetch recent data, run inference, and return per-lane forecasts.
+
+        Parameters
+        ----------
+        lookback_minutes:
+            If set, overrides :attr:`Config.inference.db_lookback_minutes` for the
+            DB fetch window (useful when the hosting API fixes history length).
 
         Returns
         -------
@@ -138,7 +144,12 @@ class TrafficPredictor:
         """
         now = datetime.now(tz=timezone.utc)
 
-        df = self._loader.load_recent(self._icfg.db_lookback_minutes)
+        minutes = (
+            lookback_minutes
+            if lookback_minutes is not None
+            else self._icfg.db_lookback_minutes
+        )
+        df = self._loader.load_recent(minutes)
         if df.empty:
             logger.warning("No recent data available — returning empty forecasts.")
             return []
