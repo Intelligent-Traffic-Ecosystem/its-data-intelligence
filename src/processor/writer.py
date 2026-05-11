@@ -8,7 +8,7 @@ from sqlalchemy import insert as sa_insert
 from processor.metrics_prom import METRICS_BATCH_WRITE_SECONDS, RAW_BATCH_WRITE_SECONDS
 from shared.config import settings
 from shared.db import SessionLocal, engine
-from shared.models import TrafficEvent, TrafficMetric
+from shared.models import AlertRecord, CameraRegistry, TrafficEvent, TrafficMetric
 from shared.schemas import TrafficEventInput
 
 logger = logging.getLogger(__name__)
@@ -32,6 +32,72 @@ def _metric_to_row(metric: dict) -> dict:
         "congestion_level": metric["congestion_level"],
         "congestion_score": metric["congestion_score"],
     }
+
+
+def _severity_from_level(level: str | None) -> str | None:
+    if level == "SEVERE":
+        return "CRITICAL"
+    if level == "HIGH":
+        return "WARNING"
+    return None
+
+
+def _reconcile_camera_alert(
+    session,
+    row: dict,
+) -> None:
+    if row.get("lane_id") is not None:
+        return
+
+    camera_id = row["camera_id"]
+    level = row.get("congestion_level")
+    score = row.get("congestion_score")
+    triggered_at = row["window_end"]
+    severity = _severity_from_level(level)
+
+    camera = (
+        session.query(CameraRegistry)
+        .filter(CameraRegistry.camera_id == camera_id)
+        .one_or_none()
+    )
+    road_segment = camera.road_segment if camera is not None else camera_id
+    open_alert = (
+        session.query(AlertRecord)
+        .filter(AlertRecord.camera_id == camera_id, AlertRecord.resolved_at.is_(None))
+        .order_by(AlertRecord.triggered_at.desc())
+        .first()
+    )
+
+    if severity is None:
+        if open_alert is not None:
+            open_alert.resolved_at = triggered_at
+            open_alert.message = f"Congestion resolved for camera {camera_id}"
+        return
+
+    if open_alert is None:
+        session.add(
+            AlertRecord(
+                severity=severity,
+                alert_type="CONGESTION",
+                camera_id=camera_id,
+                road_segment=road_segment,
+                title=f"{severity} congestion",
+                message=f"{severity} congestion detected at camera {camera_id}",
+                congestion_level=level,
+                congestion_score=score,
+                triggered_at=triggered_at,
+                payload=json.dumps({"source": "writer", "camera_id": camera_id}),
+            )
+        )
+        return
+
+    open_alert.severity = severity
+    open_alert.road_segment = road_segment
+    open_alert.title = f"{severity} congestion"
+    open_alert.message = f"{severity} congestion detected at camera {camera_id}"
+    open_alert.congestion_level = level
+    open_alert.congestion_score = score
+    open_alert.resolved_at = None
 
 
 def write_metrics(metrics: list[dict]) -> int:
@@ -64,6 +130,8 @@ def write_metrics(metrics: list[dict]) -> int:
                 },
             )
             session.execute(stmt)
+            for row in rows:
+                _reconcile_camera_alert(session, row)
         else:
             for row in rows:
                 existing = (
@@ -80,6 +148,7 @@ def write_metrics(metrics: list[dict]) -> int:
                 else:
                     for k, v in row.items():
                         setattr(existing, k, v)
+                _reconcile_camera_alert(session, row)
 
         session.commit()
         logger.debug(

@@ -3,11 +3,13 @@ from io import BytesIO
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy import case, cast, extract, func, Integer, select
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from sqlalchemy import Integer, case, cast, extract, func, select
 from sqlalchemy.orm import Session
 
 from shared.db import get_db
-from shared.models import TrafficMetric
+from shared.models import CameraRegistry, TrafficMetric
 from shared.schemas import (
     AnalyticsCompareResponse,
     AnalyticsMetricsResponse,
@@ -32,7 +34,7 @@ def _window_filters(start: datetime, end: datetime):
 def _incident_case():
     return case(
         (
-            TrafficMetric.congestion_level.in_(["HIGH", "CRITICAL"]),
+            TrafficMetric.congestion_level.in_(["HIGH", "SEVERE"]),
             1,
         ),
         else_=0,
@@ -72,51 +74,26 @@ def _range_summary(db: Session, start: datetime, end: datetime) -> AnalyticsRang
     )
 
 
-def _build_simple_pdf(title: str, lines: list[str]) -> bytes:
-    safe_lines = [title, ""] + lines
-    stream = "BT /F1 12 Tf 50 790 Td 14 TL "
-    for idx, line in enumerate(safe_lines):
-        sanitized = (
-            line.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
-        )
-        prefix = "" if idx == 0 else "T* "
-        stream += f"{prefix}({sanitized}) Tj "
-    stream += "ET"
-    content_bytes = stream.encode("latin-1", errors="replace")
-
-    objects: list[bytes] = []
-    objects.append(b"<< /Type /Catalog /Pages 2 0 R >>")
-    objects.append(b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
-    objects.append(
-        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
-        b"/Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>"
-    )
-    objects.append(
-        f"<< /Length {len(content_bytes)} >>\nstream\n".encode("ascii")
-        + content_bytes
-        + b"\nendstream"
-    )
-    objects.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
-
+def _build_reportlab_pdf(title: str, lines: list[str]) -> bytes:
     buffer = BytesIO()
-    buffer.write(b"%PDF-1.4\n")
-    offsets = [0]
-    for index, obj in enumerate(objects, start=1):
-        offsets.append(buffer.tell())
-        buffer.write(f"{index} 0 obj\n".encode("ascii"))
-        buffer.write(obj)
-        buffer.write(b"\nendobj\n")
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    y = height - 50
 
-    xref_start = buffer.tell()
-    buffer.write(f"xref\n0 {len(objects) + 1}\n".encode("ascii"))
-    buffer.write(b"0000000000 65535 f \n")
-    for offset in offsets[1:]:
-        buffer.write(f"{offset:010d} 00000 n \n".encode("ascii"))
-    buffer.write(
-        f"trailer << /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref_start}\n%%EOF".encode(
-            "ascii"
-        )
-    )
+    pdf.setFont("Helvetica-Bold", 14)
+    pdf.drawString(50, y, title)
+    y -= 30
+    pdf.setFont("Helvetica", 11)
+
+    for line in lines:
+        if y < 60:
+            pdf.showPage()
+            pdf.setFont("Helvetica", 11)
+            y = height - 50
+        pdf.drawString(50, y, line)
+        y -= 18
+
+    pdf.save()
     return buffer.getvalue()
 
 
@@ -140,10 +117,10 @@ def get_analytics_metrics(
         ).label("high_count"),
         func.coalesce(
             func.sum(
-                case((TrafficMetric.congestion_level == "CRITICAL", 1), else_=0)
+                case((TrafficMetric.congestion_level == "SEVERE", 1), else_=0)
             ),
             0,
-        ).label("critical_count"),
+        ).label("severe_count"),
         func.coalesce(func.sum(incident_case), 0).label("incident_count"),
     ).where(*_window_filters(start, end))
     summary = db.execute(summary_stmt).one()
@@ -167,20 +144,31 @@ def get_analytics_metrics(
 
     top_segments_stmt = (
         select(
-            TrafficMetric.camera_id,
-            TrafficMetric.lane_id,
+            func.coalesce(CameraRegistry.road_segment, TrafficMetric.camera_id).label(
+                "segment_key"
+            ),
             func.coalesce(func.avg(TrafficMetric.congestion_score), 0.0).label(
                 "average_congestion"
             ),
+            func.coalesce(
+                func.sum(
+                    case((TrafficMetric.congestion_level == "SEVERE", 5), else_=0)
+                ),
+                0,
+            ).label("severe_minutes"),
+            func.coalesce(func.sum(incident_case), 0).label("incident_count"),
             func.coalesce(func.avg(TrafficMetric.queue_length), 0.0).label(
                 "average_queue_length"
             ),
-            func.coalesce(func.sum(incident_case), 0).label("incident_count"),
         )
+        .join(CameraRegistry, CameraRegistry.camera_id == TrafficMetric.camera_id, isouter=True)
         .where(*_window_filters(start, end))
-        .group_by(TrafficMetric.camera_id, TrafficMetric.lane_id)
-        .order_by(func.avg(TrafficMetric.congestion_score).desc())
-        .limit(5)
+        .group_by("segment_key")
+        .order_by(
+            func.avg(TrafficMetric.congestion_score).desc(),
+            func.sum(case((TrafficMetric.congestion_level == "SEVERE", 5), else_=0)).desc(),
+        )
+        .limit(10)
     )
     top_segments_rows = db.execute(top_segments_stmt).all()
 
@@ -199,8 +187,8 @@ def get_analytics_metrics(
         ],
         top_segments=[
             TopSegment(
-                camera_id=row.camera_id,
-                lane_id=row.lane_id,
+                camera_id=row.segment_key,
+                lane_id=None,
                 average_congestion=float(row.average_congestion or 0.0),
                 average_queue_length=float(row.average_queue_length or 0.0),
                 incident_count=int(row.incident_count or 0),
@@ -210,7 +198,7 @@ def get_analytics_metrics(
         incidents=IncidentSummary(
             total_incidents=int(summary.incident_count or 0),
             high=int(summary.high_count or 0),
-            critical=int(summary.critical_count or 0),
+            critical=int(summary.severe_count or 0),
         ),
     )
 
@@ -253,7 +241,7 @@ def download_analytics_report_pdf(
         f"Incident count: {summary.incident_count}",
         f"Peak hour: {summary.peak_hour if summary.peak_hour is not None else 'N/A'}",
     ]
-    pdf_bytes = _build_simple_pdf("Traffic Analytics Report", lines)
+    pdf_bytes = _build_reportlab_pdf("Traffic Analytics Report", lines)
 
     filename = f"analytics-report-{start.date().isoformat()}-{end.date().isoformat()}.pdf"
     headers = {"Content-Disposition": f'attachment; filename="{filename}"'}

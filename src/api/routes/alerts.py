@@ -1,80 +1,22 @@
 import csv
 import io
 from datetime import UTC, datetime
-from typing import Annotated, TypeAlias
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from api.routes.admin import AdminActor, require_admin
 from shared.db import get_db
-from shared.models import AlertAcknowledgement, TrafficMetric
+from shared.models import AlertRecord
 from shared.schemas import (
     AlertAcknowledgeRequest,
     AlertAcknowledgeResponse,
     AlertOutput,
 )
 
-DbSession: TypeAlias = Annotated[Session, Depends(get_db)]
-
-router = APIRouter(prefix="/alerts")
-
-
-def _alert_id(row: TrafficMetric) -> str:
-    lane = "all" if row.lane_id is None else str(row.lane_id)
-    return f"metric-{row.id}-{row.camera_id}-{lane}"
-
-
-def _metric_to_alert(
-    row: TrafficMetric,
-    ack: AlertAcknowledgement | None = None,
-) -> AlertOutput | None:
-    level = row.congestion_level or "LOW"
-    score = row.congestion_score or 0.0
-
-    if level not in {"HIGH", "CRITICAL", "EMERGENCY"} and score < 0.7:
-        return None
-
-    if level == "EMERGENCY" or score >= 0.95:
-        severity = "EMERGENCY"
-    elif level == "CRITICAL" or score >= 0.9:
-        severity = "CRITICAL"
-    else:
-        severity = "HIGH"
-
-    road_segment = getattr(row, "road_segment", None) or row.camera_id
-
-    return AlertOutput(
-        alert_id=_alert_id(row),
-        camera_id=row.camera_id,
-        road_segment=road_segment,
-        lane_id=row.lane_id,
-        alert_type="CONGESTION",
-        severity=severity,
-        message=f"{severity} congestion detected at {row.camera_id}",
-        window_start=row.window_start,
-        window_end=row.window_end,
-        congestion_level=level,
-        congestion_score=score,
-        vehicle_count=row.vehicle_count or 0,
-        avg_speed_kmh=row.avg_speed_kmh or 0.0,
-        queue_length=row.queue_length or 0,
-        acknowledged=ack is not None,
-        acknowledged_by=ack.admin_id if ack else None,
-        acknowledged_at=ack.acknowledged_at if ack else None,
-    )
-
-
-def _ack_map(db: Session, alert_ids: list[str]) -> dict[str, AlertAcknowledgement]:
-    if not alert_ids:
-        return {}
-    rows = (
-        db.execute(select(AlertAcknowledgement).where(AlertAcknowledgement.alert_id.in_(alert_ids)))
-        .scalars()
-        .all()
-    )
-    return {row.alert_id: row for row in rows}
+router = APIRouter(prefix="/api/alerts")
 
 
 def _query_alert_metrics(
@@ -84,159 +26,103 @@ def _query_alert_metrics(
     severity: str | None = None,
     road_segment: str | None = None,
     alert_type: str | None = None,
+    camera_id: str | None = None,
 ):
-    stmt = select(TrafficMetric).where(TrafficMetric.lane_id.is_(None))
+    stmt = select(AlertRecord)
 
     if start:
-        stmt = stmt.where(TrafficMetric.window_start >= start)
+        stmt = stmt.where(AlertRecord.triggered_at >= start)
     if end:
-        stmt = stmt.where(TrafficMetric.window_start <= end)
-    if road_segment:
-        stmt = stmt.where(TrafficMetric.camera_id == road_segment)
-
-    rows = db.execute(stmt.order_by(TrafficMetric.window_start.desc())).scalars().all()
-    ids = [_alert_id(row) for row in rows]
-    acks = _ack_map(db, ids)
-
-    alerts = [
-        alert
-        for row in rows
-        if (alert := _metric_to_alert(row, acks.get(_alert_id(row)))) is not None
-    ]
-
+        stmt = stmt.where(AlertRecord.triggered_at <= end)
     if severity:
-        alerts = [alert for alert in alerts if alert.severity == severity.upper()]
+        stmt = stmt.where(AlertRecord.severity == severity.upper())
+    if road_segment:
+        stmt = stmt.where(AlertRecord.road_segment == road_segment)
     if alert_type:
-        alerts = [alert for alert in alerts if alert.alert_type == alert_type.upper()]
+        stmt = stmt.where(AlertRecord.alert_type == alert_type.upper())
+    if camera_id:
+        stmt = stmt.where(AlertRecord.camera_id == camera_id)
 
-    return alerts
-
-
-@router.get("/current", response_model=list[AlertOutput])
-def get_current_alerts(db: DbSession):
-    latest = (
-        select(
-            TrafficMetric.camera_id,
-            func.max(TrafficMetric.window_start).label("max_ws"),
-        )
-        .where(TrafficMetric.lane_id.is_(None))
-        .group_by(TrafficMetric.camera_id)
-        .subquery()
-    )
-
-    rows = (
-        db.execute(
-            select(TrafficMetric)
-            .join(
-                latest,
-                (TrafficMetric.camera_id == latest.c.camera_id)
-                & (TrafficMetric.window_start == latest.c.max_ws),
-            )
-            .where(TrafficMetric.lane_id.is_(None))
-        )
-        .scalars()
-        .all()
-    )
-
-    ids = [_alert_id(row) for row in rows]
-    acks = _ack_map(db, ids)
-
+    rows = db.execute(stmt.order_by(AlertRecord.triggered_at.desc())).scalars().all()
     return [
-        alert
+        AlertOutput(
+            id=row.id,
+            camera_id=row.camera_id,
+            road_segment=row.road_segment,
+            alert_type=row.alert_type,
+            severity=row.severity,
+            title=row.title,
+            message=row.message,
+            congestion_level=row.congestion_level,
+            congestion_score=row.congestion_score,
+            triggered_at=row.triggered_at,
+            resolved_at=row.resolved_at,
+            acknowledged=row.acknowledged_at is not None,
+            acknowledged_by=row.acknowledged_by,
+            acknowledged_at=row.acknowledged_at,
+        )
         for row in rows
-        if (alert := _metric_to_alert(row, acks.get(_alert_id(row)))) is not None
     ]
 
 
 @router.get("/history", response_model=list[AlertOutput])
 def get_alert_history(
-    db: DbSession,
     severity: str | None = Query(None),
     road_segment: str | None = Query(None),
-    start: datetime = Query(..., alias="from"),
-    end: datetime = Query(..., alias="to"),
+    camera_id: str | None = Query(None),
+    start: datetime | None = Query(None, alias="from"),
+    end: datetime | None = Query(None, alias="to"),
     alert_type: str | None = Query(None, alias="type"),
+    db: Session = Depends(get_db),
 ):
-    return _query_alert_metrics(db, start, end, severity, road_segment, alert_type)
+    return _query_alert_metrics(db, start, end, severity, road_segment, alert_type, camera_id)
 
 
-@router.post(
-    "/{alert_id}/acknowledge",
-    response_model=AlertAcknowledgeResponse,
-    responses={
-        400: {"description": "Metric does not qualify for acknowledgement"},
-        404: {"description": "Alert not found"},
-    },
-)
+@router.post("/{id}/acknowledge", response_model=AlertAcknowledgeResponse)
 def acknowledge_alert(
-    alert_id: str,
+    id: int,
     payload: AlertAcknowledgeRequest,
-    db: DbSession,
+    db: Session = Depends(get_db),
+    actor: AdminActor = Depends(require_admin),
 ):
-    existing = db.execute(
-        select(AlertAcknowledgement).where(AlertAcknowledgement.alert_id == alert_id)
-    ).scalar_one_or_none()
+    alert = db.get(AlertRecord, id)
+    if alert is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
 
-    if existing:
+    if alert.acknowledged_at is not None:
         return AlertAcknowledgeResponse(
-            alert_id=existing.alert_id,
-            admin_id=existing.admin_id,
-            acknowledged_at=existing.acknowledged_at,
+            alert_id=alert.id,
+            admin_id=alert.acknowledged_by or payload.admin_id,
+            acknowledged_at=alert.acknowledged_at,
             status="already_acknowledged",
         )
 
-    try:
-        metric_id = int(alert_id.split("-")[1])
-    except (IndexError, ValueError):
-        raise HTTPException(status_code=404, detail="Alert not found")
-
-    metric = db.execute(
-        select(TrafficMetric).where(TrafficMetric.id == metric_id)
-    ).scalar_one_or_none()
-
-    if metric is None:
-        raise HTTPException(status_code=404, detail="Alert not found")
-
-    if alert_id != _alert_id(metric):
-        raise HTTPException(status_code=404, detail="Alert not found")
-    alert = _metric_to_alert(metric)
-
-    if alert is None:
-        raise HTTPException(status_code=400, detail="Metric does not qualify as an alert")
-
-    if alert.severity not in {"CRITICAL", "EMERGENCY"}:
-        raise HTTPException(
-            status_code=400,
-            detail="Only CRITICAL or EMERGENCY alerts can be acknowledged",
-        )
-
-    ack = AlertAcknowledgement(
-        alert_id=alert_id,
-        admin_id=payload.admin_id,
-        acknowledged_at=datetime.now(UTC),
-    )
-    db.add(ack)
+    alert.acknowledged_by = actor.actor_id or payload.admin_id
+    alert.acknowledged_at = datetime.now(UTC)
     db.commit()
-    db.refresh(ack)
+    db.refresh(alert)
 
     return AlertAcknowledgeResponse(
-        alert_id=ack.alert_id,
-        admin_id=ack.admin_id,
-        acknowledged_at=ack.acknowledged_at,
+        alert_id=alert.id,
+        admin_id=alert.acknowledged_by or payload.admin_id,
+        acknowledged_at=alert.acknowledged_at,
         status="acknowledged",
     )
 
 
 @router.get("/export")
 def export_alert_history(
-    db: DbSession,
     severity: str | None = Query(None),
     road_segment: str | None = Query(None),
-    start: datetime = Query(..., alias="from"),
-    end: datetime = Query(..., alias="to"),
+    camera_id: str | None = Query(None),
+    start: datetime | None = Query(None, alias="from"),
+    end: datetime | None = Query(None, alias="to"),
     alert_type: str | None = Query(None, alias="type"),
+    db: Session = Depends(get_db),
 ):
-    alerts = _query_alert_metrics(db, start, end, severity, road_segment, alert_type)
+    alerts = _query_alert_metrics(
+        db, start, end, severity, road_segment, alert_type, camera_id
+    )
 
     output = io.StringIO()
     writer = csv.writer(output)
@@ -245,17 +131,14 @@ def export_alert_history(
             "alert_id",
             "camera_id",
             "road_segment",
-            "lane_id",
             "alert_type",
             "severity",
+            "title",
             "message",
-            "window_start",
-            "window_end",
+            "triggered_at",
+            "resolved_at",
             "congestion_level",
             "congestion_score",
-            "vehicle_count",
-            "avg_speed_kmh",
-            "queue_length",
             "acknowledged",
             "acknowledged_by",
             "acknowledged_at",
@@ -265,20 +148,17 @@ def export_alert_history(
     for alert in alerts:
         writer.writerow(
             [
-                alert.alert_id,
+                alert.id,
                 alert.camera_id,
                 alert.road_segment,
-                alert.lane_id,
                 alert.alert_type,
                 alert.severity,
+                alert.title,
                 alert.message,
-                alert.window_start.isoformat(),
-                alert.window_end.isoformat(),
+                alert.triggered_at.isoformat(),
+                alert.resolved_at.isoformat() if alert.resolved_at else "",
                 alert.congestion_level,
                 alert.congestion_score,
-                alert.vehicle_count,
-                alert.avg_speed_kmh,
-                alert.queue_length,
                 alert.acknowledged,
                 alert.acknowledged_by,
                 alert.acknowledged_at.isoformat() if alert.acknowledged_at else "",
