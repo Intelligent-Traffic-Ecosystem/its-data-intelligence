@@ -13,6 +13,12 @@ COPY requirements/api.txt requirements/api.txt
 RUN pip install --no-cache-dir -r requirements/api.txt \
     && pip install --no-cache-dir "kafka-python>=2.0,<3"
 
+# ML deps for /api/predict/congestion (ST-GCN via traffic-predictor).
+# CPU-only torch keeps the image ~250 MB lighter than the default CUDA wheel.
+RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu \
+        "torch>=2.2,<3" \
+    && pip install --no-cache-dir "torch-geometric>=2.5,<3"
+
 # Copy source code
 COPY src/shared/ /app/shared/
 COPY src/api/ /app/api/
