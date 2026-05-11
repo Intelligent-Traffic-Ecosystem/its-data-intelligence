@@ -17,7 +17,28 @@ from datetime import datetime, timezone
 from kafka import KafkaProducer
 
 VEHICLE_CLASSES = ["car", "truck", "bus", "motorcycle", "bicycle"]
-CAMERA_IDS = ["cam_{:02d}".format(i) for i in range(1, 21)]
+CAMERA_LOCATIONS = {
+    "cam1": (6.931777, 79.846805),
+    "cam2": (6.927517, 79.849893),
+    "cam3": (6.934078, 79.866102),
+    "cam4": (6.912149, 79.855979),
+    "cam5": (6.911370, 79.877183),
+    "cam6": (6.931370, 79.878204),
+    "cam7": (6.897231, 79.860079),
+    "cam8": (6.896660, 79.877218),
+}
+# Typical town-area camera-specific base speeds (km/h).
+# Vehicles in a camera zone move at similar speeds with small jitter.
+CAMERA_BASE_SPEED_KMPH = {
+    "cam1": 42.0,
+    "cam2": 38.0,
+    "cam3": 50.0,
+    "cam4": 34.0,
+    "cam5": 46.0,
+    "cam6": 55.0,
+    "cam7": 32.0,
+    "cam8": 40.0,
+}
 KAFKA_CONNECT_RETRIES = 10
 KAFKA_CONNECT_DELAY_SECONDS = 2
 
@@ -30,17 +51,14 @@ def generate_event(
 ) -> dict:
     """Generate a single realistic traffic event matching the B1 schema."""
     vehicle_class = random.choice(VEHICLE_CLASSES)
-
-    hour = datetime.now().second % 60
-    if hour < 20:
-        speed = random.uniform(0, 25)
-    elif hour < 40:
-        speed = random.uniform(15, 55)
-    else:
-        speed = random.uniform(30, 65)
+    lat, lng = CAMERA_LOCATIONS[camera_id]
+    base_speed = CAMERA_BASE_SPEED_KMPH[camera_id]
+    speed = min(max(random.gauss(base_speed, 2.5), 30.0), 70.0)
 
     event: dict = {
         "camera_id": camera_id,
+        "latitude": lat,
+        "longitude": lng,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "frame_id": vehicle_counter,
         "vehicle_id": f"veh_{vehicle_counter:06d}",
@@ -67,26 +85,28 @@ def generate_event(
 def generate_malformed_event() -> str:
     """Occasionally generate a malformed event to test validator resilience."""
     bad_events = [
-        '{"camera_id": "cam_01"}',  # Missing required fields
-        "not json at all",
-        '{"camera_id": "cam_01", "class": "spaceship", "timestamp": "2026-01-01T00:00:00Z", "frame_id": 1, "vehicle_id": "v1", "confidence": 0.9, "bbox": {"x":0,"y":0,"w":1,"h":1}, "centroid": {"x":0,"y":0}}',
-        "",
+        '{"camera_id":"cam1","timestamp":"2026-01-01T00:00:00Z","frame_id":1}',  # Missing fields
+        '{"camera_id":"cam2","timestamp":"bad-ts","frame_id":"NaN","vehicle_id":"v1","class":"car","confidence":0.9,"bbox":{"x":0,"y":0,"w":1,"h":1},"centroid":{"x":0,"y":0}}',
+        '{"camera_id":"cam3","timestamp":"2026-01-01T00:00:00Z","frame_id":2,"vehicle_id":"v2","class":"car","confidence":1.4,"bbox":{"x":0,"y":0,"w":1,"h":1},"centroid":{"x":0,"y":0}}',
     ]
     return random.choice(bad_events)
 
 
 def main():
     parser = argparse.ArgumentParser(description="Mock traffic event producer")
-    parser.add_argument("--cameras", type=int, default=4, help="Number of cameras to simulate")
+    parser.add_argument("--cameras", type=int, default=8, help="Number of cameras to simulate (max 8)")
     parser.add_argument("--rate", type=float, default=10, help="Events per second (total across cameras)")
     parser.add_argument("--brokers", type=str, default="localhost:29094", help="Kafka broker(s)")
     parser.add_argument("--topic", type=str, default="traffic.events.raw", help="Kafka topic")
-    parser.add_argument("--malformed-rate", type=float, default=0.02, help="Fraction of malformed events (0-1)")
+    parser.add_argument("--malformed-rate", type=float, default=0.0, help="Fraction of malformed events (0-1)")
     parser.add_argument("--with-lanes", action="store_true", help="Include lane_id on ~80%% of events")
     parser.add_argument("--no-speed", action="store_true", help="Omit speed_estimate so B2 must compute it")
     args = parser.parse_args()
 
-    cameras = CAMERA_IDS[: args.cameras]
+    if args.cameras < 1 or args.cameras > len(CAMERA_LOCATIONS):
+        print(f"--cameras must be between 1 and {len(CAMERA_LOCATIONS)}")
+        sys.exit(2)
+    cameras = list(CAMERA_LOCATIONS.keys())[: args.cameras]
     delay = 1.0 / args.rate
 
     print(f"Connecting to Kafka at {args.brokers}...")

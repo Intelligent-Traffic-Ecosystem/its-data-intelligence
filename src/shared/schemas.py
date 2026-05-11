@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
 
 # --- Input event from B1 via Kafka ---
 
@@ -159,18 +159,33 @@ class AlertAcknowledgeResponse(BaseModel):
 
 
 class CameraRegistryCreate(BaseModel):
+    model_config = {"populate_by_name": True}
+
     camera_id: str = Field(min_length=1, max_length=200)
     name: str = Field(min_length=1, max_length=200)
-    latitude: float = Field(ge=-90, le=90)
-    longitude: float = Field(ge=-180, le=180)
+    latitude: float = Field(
+        ge=-90, le=90, validation_alias=AliasChoices("latitude", "lat")
+    )
+    longitude: float = Field(
+        ge=-180, le=180, validation_alias=AliasChoices("longitude", "lng")
+    )
     road_segment: str | None = Field(default=None, max_length=500)
     description: str | None = Field(default=None, max_length=2000)
 
 
 class CameraRegistryUpdate(BaseModel):
+    model_config = {"populate_by_name": True}
+
     name: str | None = Field(default=None, min_length=1, max_length=200)
-    latitude: float | None = Field(default=None, ge=-90, le=90)
-    longitude: float | None = Field(default=None, ge=-180, le=180)
+    latitude: float | None = Field(
+        default=None, ge=-90, le=90, validation_alias=AliasChoices("latitude", "lat")
+    )
+    longitude: float | None = Field(
+        default=None,
+        ge=-180,
+        le=180,
+        validation_alias=AliasChoices("longitude", "lng"),
+    )
     road_segment: str | None = Field(default=None, max_length=500)
     description: str | None = Field(default=None, max_length=2000)
 
@@ -179,8 +194,8 @@ class CameraRegistryOut(BaseModel):
     id: int
     camera_id: str
     name: str
-    latitude: float
-    longitude: float
+    latitude: float | None = None
+    longitude: float | None = None
     road_segment: str | None = None
     description: str | None = None
     created_at: datetime

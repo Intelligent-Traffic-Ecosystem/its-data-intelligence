@@ -365,12 +365,27 @@ def update_camera_registry(
         db.execute(select(CameraRegistry).where(CameraRegistry.camera_id == camera_id))
         .scalar_one_or_none()
     )
-    if row is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Camera not found")
-
     updates = payload.model_dump(exclude_unset=True)
-    for key, value in updates.items():
-        setattr(row, key, value)
+    if row is None:
+        lat = updates.get("latitude")
+        lng = updates.get("longitude")
+        if lat is None or lng is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Camera not found. Provide latitude/longitude (or lat/lng) to create.",
+            )
+        row = CameraRegistry(
+            camera_id=camera_id,
+            name=updates.get("name") or camera_id,
+            latitude=lat,
+            longitude=lng,
+            road_segment=updates.get("road_segment"),
+            description=updates.get("description"),
+        )
+        db.add(row)
+    else:
+        for key, value in updates.items():
+            setattr(row, key, value)
 
     _log_audit(db, actor.actor_id, "cameras.update", "cameras", camera_id, updates)
     db.commit()
