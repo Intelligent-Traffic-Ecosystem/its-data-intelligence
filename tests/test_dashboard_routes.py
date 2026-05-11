@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from api.main import app
 from shared.models import TrafficEvent, TrafficMetric
-from tests.conftest import _TestingSessionLocal
+from conftest import _TestingSessionLocal
 
 client = TestClient(app)
 

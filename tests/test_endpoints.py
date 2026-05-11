@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from api.main import app
 from shared.config import settings
 from shared.models import AlertRecord, CameraRegistry, TrafficMetric
-from tests.conftest import _TestingSessionLocal
+from conftest import _TestingSessionLocal
 
 client = TestClient(app)
 ADMIN_HEADERS = {"X-Admin-Token": "test-admin-token", "X-Admin-User": "b3-admin"}
