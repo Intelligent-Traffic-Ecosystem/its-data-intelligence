@@ -131,6 +131,8 @@ def map_heatmap(
         .where(
             TrafficMetric.lane_id.is_(None),
             TrafficMetric.window_start >= cutoff,
+            CameraRegistry.latitude.is_not(None),
+            CameraRegistry.longitude.is_not(None),
         )
         .group_by(
             TrafficMetric.camera_id,
@@ -173,7 +175,11 @@ def map_incidents(
     rows = db.execute(
         select(TrafficMetric, CameraRegistry)
         .join(CameraRegistry, CameraRegistry.camera_id == TrafficMetric.camera_id)
-        .where(TrafficMetric.lane_id.is_(None))
+        .where(
+            TrafficMetric.lane_id.is_(None),
+            CameraRegistry.latitude.is_not(None),
+            CameraRegistry.longitude.is_not(None),
+        )
         .order_by(TrafficMetric.window_start.desc())
     ).all()
     latest_by_camera: dict[str, tuple[TrafficMetric, CameraRegistry]] = {}
