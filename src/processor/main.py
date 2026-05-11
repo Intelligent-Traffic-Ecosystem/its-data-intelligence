@@ -22,6 +22,7 @@ from shared.config import settings
 from shared.db import SessionLocal, engine
 from shared.logging_setup import configure_logging
 from shared.models import Base
+from shared.threshold_loader import load_thresholds_from_db
 
 configure_logging("b2-processor")
 logger = logging.getLogger("processor")
@@ -42,6 +43,10 @@ def main() -> None:
 
     Base.metadata.create_all(bind=engine)
     logger.info("db_tables_verified")
+
+    # Load admin thresholds from database
+    with SessionLocal() as db:
+        load_thresholds_from_db(db)
 
     start_http_server(settings.processor_metrics_port)
     logger.info("prometheus_started port=%d", settings.processor_metrics_port)

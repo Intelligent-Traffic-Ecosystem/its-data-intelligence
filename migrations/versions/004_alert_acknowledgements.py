@@ -22,7 +22,13 @@ def upgrade():
         sa.Column("admin_id", sa.Text, nullable=False),
         sa.Column("acknowledged_at", sa.DateTime(timezone=True), nullable=False),
     )
+    op.create_index(
+        "ix_alert_acknowledgements_alert_id",
+        "alert_acknowledgements",
+        ["alert_id"],
+    )
 
 
 def downgrade():
+    op.drop_index("ix_alert_acknowledgements_alert_id", table_name="alert_acknowledgements")
     op.drop_table("alert_acknowledgements")

@@ -1,0 +1,15 @@
+# Training virtual env
+.venv/
+__pycache__/
+*.pyc
+
+# Large datasets — instructions for fetching are in README.
+data/PEMS04.npz
+data/PEMS04_distance.csv
+data/training.db
+data/training.db-journal
+
+# Trainer log
+train.log
+
+# Note: checkpoints/best_model.pt is committed (it is the demo artifact).

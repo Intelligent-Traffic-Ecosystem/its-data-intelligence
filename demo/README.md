@@ -83,6 +83,14 @@ websocat 'ws://localhost:18001/ws/metrics?camera_id=cam_01' | jq -c .
 
 Only `cam_01` arrives now — the SQL push-down means the server doesn't even fetch other cameras' rows.
 
+### Per-lane breakdowns (separate channel)
+
+```bash
+websocat 'ws://localhost:18001/ws/metrics/lanes?camera_id=cam_01' | jq -c .
+```
+
+Same cadence, same metric shape — but one row per lane.
+
 ### What to point at while it scrolls
 
 - **Cadence:** "One push every 5 seconds — that's our window size."

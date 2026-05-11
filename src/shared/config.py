@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     api_port: int = 8000
     ws_broadcast_interval: int = 5
 
+    # Admin API
+    admin_api_key: str = "change-me"
+
     # Speed fallback (centroid-based)
     speed_tracker_ttl_seconds: int = 30
     speed_tracker_pixel_to_meter: float = 0.05
@@ -88,6 +91,11 @@ class Settings(BaseSettings):
 
     # Processor Prometheus port
     processor_metrics_port: int = 9100
+
+    # ST-GCN (traffic-predictor) — used by GET /api/predict/congestion
+    traffic_predictor_home: str = ""
+    stgcn_config_path: str = ""
+    stgcn_checkpoint_path: str = ""
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

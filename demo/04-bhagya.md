@@ -89,6 +89,14 @@ websocat 'ws://localhost:8000/ws/metrics?camera_id=cam_01'
 
 > **Talking point:** *"Same connection, just adds `?camera_id=`. The filter happens at the SQL level so we don't ship rows we'll just throw away."*
 
+```bash
+# Tab B (Ctrl+C, reconnect per-lane)
+websocat 'ws://localhost:8000/ws/metrics/lanes?camera_id=cam_01'
+# (only cam_01, per-lane rows)
+```
+
+> **Talking point:** *"Separate channel for per-lane rows, so camera-wide stays clean by default."*
+
 ---
 
 ## What I changed
@@ -99,4 +107,4 @@ websocat 'ws://localhost:8000/ws/metrics?camera_id=cam_01'
 
 ## Q&A prep
 - **Q: Why not 503 when degraded?** Many monitors stop scraping endpoints that return 5xx. We want continuous visibility into partial outages — the body carries the truth.
-- **Q: Per-lane WebSocket subscription?** Open issue #22 — discussing with B3 whether they want a separate `/ws/metrics/lanes` channel or an `include_lanes=true` flag on the existing endpoint.
+- **Q: Per-lane WebSocket subscription?** Implemented as a separate `/ws/metrics/lanes` channel (per B3 preference).

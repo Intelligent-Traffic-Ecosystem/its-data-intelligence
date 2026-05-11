@@ -1,0 +1,134 @@
+# ==============================================================================
+# ST-GCN Traffic Forecasting — Configuration
+# ==============================================================================
+
+database:
+  # Default points to the SQLite training DB produced by scripts/import_pems04.py.
+  # In production, override with STGCN_DATABASE__URL=postgresql://...
+  url: "sqlite:///./data/training.db"
+  pool_size: 5
+  max_overflow: 10
+
+kafka:
+  brokers: "kafka:9092"
+  topic_metrics: "traffic.metrics"          # downstream metrics topic (optional)
+  topic_predictions: "traffic.predictions"  # output topic for predictions
+  consumer_group: "stgcn-predictor"
+  auto_offset_reset: "latest"
+
+# ---------------------------------------------------------------------------
+# Lane / camera topology — defines the graph edges
+# Each entry maps a camera to its ordered list of lane IDs.
+# Edges are automatically added between adjacent lanes on the same camera.
+# Cross-camera edges can be defined explicitly under cross_camera_edges.
+# ---------------------------------------------------------------------------
+topology:
+  # Topology mirrors the PEMS04 subset chosen by scripts/import_pems04.py:
+  # 12 sensors arranged into 3 cameras × 4 lanes. The cross-camera edges
+  # below are the real PEMS04 freeway adjacencies between those sensors.
+  cameras:
+    - camera_id: "cam-001"
+      lane_ids: [1, 2, 3, 4]
+    - camera_id: "cam-002"
+      lane_ids: [1, 2, 3, 4]
+    - camera_id: "cam-003"
+      lane_ids: [1, 2, 3, 4]
+
+  cross_camera_edges:
+    - {from_camera: "cam-003", from_lane: 1, to_camera: "cam-001", to_lane: 1}
+    - {from_camera: "cam-003", from_lane: 4, to_camera: "cam-002", to_lane: 1}
+    - {from_camera: "cam-002", from_lane: 2, to_camera: "cam-001", to_lane: 3}
+    - {from_camera: "cam-001", from_lane: 3, to_camera: "cam-002", to_lane: 1}
+    - {from_camera: "cam-003", from_lane: 4, to_camera: "cam-002", to_lane: 4}
+
+# ---------------------------------------------------------------------------
+# Feature engineering
+# ---------------------------------------------------------------------------
+features:
+  node_features:
+    - vehicle_count
+    - avg_speed_kmh
+    - stopped_ratio
+    - congestion_score
+    - hour_sin               # cyclical time-of-day encoding
+    - hour_cos
+    - dow_sin                # cyclical day-of-week encoding
+    - dow_cos
+  # Sized for the PEMS04 5-minute cadence. 12 in × 6 out = 1h history → 30 min horizon.
+  input_window: 12           # past 5-min windows (= 1 hour history)
+  output_horizon: 6          # future 5-min windows (= 30 min forecast)
+  window_size_seconds: 300
+
+  normalization:
+    vehicle_count_max: 700   # PEMS04 flow saturates near 700 per 5-min interval.
+    speed_max_kmh: 110.0
+
+# ---------------------------------------------------------------------------
+# ST-GCN model hyper-parameters
+# ---------------------------------------------------------------------------
+model:
+  hidden_channels: 64
+  num_stgcn_blocks: 3
+  temporal_kernel_size: 3    # TCN kernel along the time axis
+  cheb_k: 3                  # Chebyshev polynomial order for spatial conv
+  dropout: 0.1
+
+  # Multi-task output heads
+  heads:
+    vehicle_count: true      # regression
+    congestion_prob: true    # per-step probability  (sigmoid)
+    congestion_level: true   # LOW / MEDIUM / HIGH classification
+
+  # Loss weights for multi-task learning
+  loss_weights:
+    vehicle_count: 1.0
+    congestion_prob: 0.5
+    congestion_level: 0.5
+
+# ---------------------------------------------------------------------------
+# Training
+# ---------------------------------------------------------------------------
+training:
+  # Tuned for a CPU demo run on the PEMS04 subset (~17k timesteps).
+  epochs: 25
+  batch_size: 64
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-4
+  lr_scheduler:
+    type: "cosine"           # "cosine" | "step" | "none"
+    T_max: 25
+    eta_min: 1.0e-5
+  early_stopping_patience: 6
+  val_fraction: 0.15
+  test_fraction: 0.10
+  checkpoint_dir: "checkpoints"
+  log_interval: 20           # log every N batches
+
+# ---------------------------------------------------------------------------
+# Inference / real-time prediction
+# ---------------------------------------------------------------------------
+inference:
+  checkpoint_path: "checkpoints/best_model.pt"
+  device: "cpu"              # "cpu" | "cuda" | "mps"
+  poll_interval_seconds: 5   # how often to re-run prediction
+  db_lookback_minutes: 10    # how many minutes of history to fetch from DB
+
+  congestion:
+    start_threshold: 0.55    # prob above which congestion is considered "started"
+    end_threshold: 0.30      # prob below which congestion is considered "ended"
+    min_duration_steps: 3    # min consecutive steps to confirm start/end
+
+# ---------------------------------------------------------------------------
+# API
+# ---------------------------------------------------------------------------
+api:
+  host: "0.0.0.0"
+  port: 8001
+  log_level: "info"
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+logging:
+  level: "INFO"
+  format: "json"             # "json" | "text"

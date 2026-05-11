@@ -3,7 +3,7 @@ from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_
 
 router = APIRouter()
 
-# Define Prometheus metrics
+# Define Prometheus metrics.
 REQUEST_COUNT = Counter(
     "b2_api_requests_total",
     "Total API requests",

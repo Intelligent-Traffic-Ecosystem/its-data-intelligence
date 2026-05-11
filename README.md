@@ -1,5 +1,5 @@
 # B2 — Data & Intelligence
-
+#its-data-intelligence
 Stream processing and analytics API for the Intelligent Traffic System.
 
 ## Architecture
@@ -47,7 +47,7 @@ A step-by-step walkthrough that exercises every capability the team built. Run f
 ```bash
 cp .env.example .env
 docker compose up -d
-docker compose ps                            
+docker compose ps
 docker compose exec b2-stream-processor alembic upgrade head
 ```
 
@@ -135,11 +135,22 @@ ORDER BY window_start DESC LIMIT 5;"
 `avg_speed` is non-zero — `SpeedTracker` computed it from inter-frame centroid displacement.
 
 ### 9 — REST endpoints (the contract for B3)
+Use a `camera_id` that actually exists (after the mock producer, `/cameras` typically lists `cam_01` … `cam_04` when `--cameras 4`). For a full ordered curl checklist, see **Verify the HTTP API locally (step-by-step)** below.
+
 ```bash
-curl -s localhost:18001/cameras | jq
-curl -s "localhost:18001/metrics/current?camera_id=cam_01" | jq
-curl -s "localhost:18001/metrics/history?camera_id=cam_01&from=2026-05-01T00:00:00Z&to=2026-05-02T00:00:00Z" | jq
-curl -s localhost:18001/congestion/current | jq
+export BASE=http://localhost:18001
+curl -s "$BASE/cameras" | jq
+curl -s "$BASE/metrics/current?camera_id=cam_01" | jq
+curl -s "$BASE/metrics/history?camera_id=cam_01&from=2026-05-01T00:00:00Z&to=2026-05-02T00:00:00Z" | jq
+curl -s "$BASE/congestion/current" | jq
+curl -s "$BASE/api/dashboard/summary" | jq
+curl -s "$BASE/api/dashboard/events?limit=5" | jq
+curl -s "$BASE/api/map/heatmap?minutes=5" | jq
+curl -s "$BASE/api/map/incidents" | jq
+curl -s "$BASE/api/alerts/current" | jq
+curl -s "$BASE/api/analytics/metrics" | jq
+# ST-GCN forecast (defaults: horizon 10 min, lookback 15 min). Requires checkpoint + topology; may 404/503 until configured.
+curl -s "$BASE/api/predict/congestion?camera_id=cam_01" | jq
 ```
 
 ### 10 — WebSocket live stream
@@ -149,6 +160,15 @@ websocat ws://localhost:18001/ws/metrics
 
 # single camera
 websocat 'ws://localhost:18001/ws/metrics?camera_id=cam_01'
+
+# per-lane breakdowns for one camera
+websocat 'ws://localhost:18001/ws/metrics/lanes?camera_id=cam_01'
+
+# unified real-time event channel (#35) — typed envelopes:
+#   traffic_metrics_update (5s), heatmap_update (10s),
+#   new_alert (instant on HIGH/SEVERE), admin_broadcast.
+websocat ws://localhost:18001/ws/events
+websocat 'ws://localhost:18001/ws/events?types=new_alert,admin_broadcast'
 ```
 
 ### 11 — Prometheus metrics (two endpoints)
@@ -233,19 +253,174 @@ Per SRS §7, the processor sweeps old rows on a configurable interval
 
 ## API Endpoints
 
+All HTTP paths below are served by **b2-api** (default host mapping: `http://localhost:18001` → container port `8000`). Routers are defined under `src/api/main.py` and `src/api/routes/`.
+
+### Traffic and health
+
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/cameras` | List active cameras |
-| GET | `/metrics/current?camera_id=X` | Latest metrics for a camera |
-| GET | `/metrics/history?camera_id=X&from=T1&to=T2` | Historical metrics |
-| GET | `/congestion/current` | Current congestion for all cameras |
-| GET | `/health` | Liveness probe (checks Kafka + Postgres) |
-| GET | `/metrics` | Prometheus scrape endpoint (b2-api on :18001) |
-| WS | `/ws/metrics[?camera_id=X]` | Live metric updates (every 5s); optional camera filter |
+| GET | `/health` | Liveness probe (Kafka + Postgres reachability) |
+| GET | `/cameras` | List active cameras (from latest metrics) |
+| GET | `/metrics/current?camera_id=X` | Latest aggregated metrics for one camera |
+| GET | `/metrics/history?camera_id=X&from=T1&to=T2` | Historical metrics (`from` / `to` are ISO 8601) |
+| GET | `/congestion/current` | Latest camera-wide congestion for all cameras |
 
-The processor exposes its own Prometheus endpoint on port `9100`:
-`b2_events_processed_total`, `b2_events_dropped_total{reason}`,
-`b2_window_flushes_total`, `b2_kafka_consumer_lag`.
+### Dashboard and map (B3 helpers)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/dashboard/summary` | KPI summary across cameras |
+| GET | `/api/dashboard/events?limit=N` | Recent raw traffic events (default `limit=10`) |
+| GET | `/api/map/heatmap?minutes=N` | Per-camera intensity for heatmap (default `minutes=5`) |
+| GET | `/api/map/incidents?severity=…` | Cameras with elevated congestion; optional `severity` filter |
+
+### Alerts
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/alerts/current` | Active congestion-style alerts from latest metrics |
+| GET | `/api/alerts/history` | Optional filters: `from`, `to`, `severity`, `road_segment`, `type` |
+| POST | `/api/alerts/{alert_id}/acknowledge` | JSON body: `admin_id` (see OpenAPI `/docs`) |
+| GET | `/api/alerts/export` | CSV export; same query params as history |
+
+### Analytics
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/analytics/metrics` | Optional `start` / `end` (ISO); defaults to last 24h |
+| GET | `/api/analytics/compare` | Required `start_a`, `end_a`, `start_b`, `end_b` |
+| GET | `/api/analytics/report/pdf` | Optional `start` / `end`; returns a PDF attachment |
+
+### Forecast (ST-GCN)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/predict/congestion?camera_id=X` | ST-GCN lane forecast aggregated to camera level. Query params: `horizon_minutes` (default **10**), `lookback_minutes` (default **15**). Needs `traffic-predictor/` config + trained checkpoint on the API host; see `TRAFFIC_PREDICTOR_HOME`, `STGCN_CONFIG_PATH`, `STGCN_CHECKPOINT_PATH` in `.env.example`. |
+
+### Admin (authenticated)
+
+All under `/api/admin/…`. Send `X-Admin-Token: <ADMIN_API_KEY>` (or Bearer token). In `docker-compose.yml`, `b2-api` sets `ADMIN_API_KEY` for local dev.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET/PUT | `/api/admin/thresholds` | Read/update congestion thresholds |
+| GET | `/api/admin/zones` | List monitoring zones |
+| POST | `/api/admin/zones` | Create zone (JSON body) |
+| PUT | `/api/admin/zones/{zone_id}` | Update zone |
+| DELETE | `/api/admin/zones/{zone_id}` | Delete zone |
+| POST | `/api/admin/notifications/broadcast` | Push message to WebSocket `admin_broadcast` |
+
+### WebSockets
+
+| Protocol | Path | Description |
+|----------|------|-------------|
+| WS | `/ws/metrics` | Optional query params: `camera_id`, `role` (`viewer` or `operator`) |
+| WS | `/ws/metrics/lanes` | Same optional params as `/ws/metrics` |
+| WS | `/ws/events[?types=…]` | Typed envelopes: `traffic_metrics_update`, `heatmap_update`, `new_alert`, `admin_broadcast` |
+
+### Prometheus (API process)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/metrics` | Prometheus scrape (request counts, latency, etc.) |
+
+The stream **processor** exposes its own Prometheus endpoint on host port **`9100`** (see Demo §11): `b2_events_processed_total`, `b2_events_dropped_total{reason}`, `b2_window_flushes_total`, `b2_kafka_consumer_lag`.
+
+Interactive OpenAPI: **`http://localhost:18001/docs`** (Swagger UI) lists every route, parameters, and response schemas.
+
+## Verify the HTTP API locally (step-by-step)
+
+Follow these in order after the stack is up (`docker compose up -d`, migrations applied as in **Demo §1**). Set a base URL (host port from `docker-compose.yml` for **b2-api**):
+
+```bash
+export BASE=http://localhost:18001
+```
+
+1. **Health** — expect `status` `ok` or `degraded` if Kafka is down.
+   ```bash
+   curl -s "$BASE/health" | jq
+   ```
+
+2. **Cameras** — confirms the API can read Postgres; IDs should match your producer (e.g. `cam_01`).
+   ```bash
+   curl -s "$BASE/cameras" | jq
+   ```
+
+3. **Latest metrics** — pick any `camera_id` from step 2.
+   ```bash
+   curl -s "$BASE/metrics/current?camera_id=cam_01" | jq
+   ```
+
+4. **Metrics history** — adjust `from` / `to` to bracket existing `window_start` values (UTC ISO 8601).
+   ```bash
+   curl -s "$BASE/metrics/history?camera_id=cam_01&from=2026-05-01T00:00:00Z&to=2026-05-11T23:59:59Z" | jq
+   ```
+
+5. **Congestion snapshot (all cameras)**.
+   ```bash
+   curl -s "$BASE/congestion/current" | jq
+   ```
+
+6. **Dashboard summary**.
+   ```bash
+   curl -s "$BASE/api/dashboard/summary" | jq
+   ```
+
+7. **Recent events**.
+   ```bash
+   curl -s "$BASE/api/dashboard/events?limit=5" | jq
+   ```
+
+8. **Heatmap points**.
+   ```bash
+   curl -s "$BASE/api/map/heatmap?minutes=5" | jq
+   ```
+
+9. **Map incidents** (optional `?severity=HIGH`).
+   ```bash
+   curl -s "$BASE/api/map/incidents" | jq
+   ```
+
+10. **Alerts** — may be an empty array until metrics show HIGH/CRITICAL-style congestion.
+    ```bash
+    curl -s "$BASE/api/alerts/current" | jq
+    ```
+
+11. **Analytics (24h default window)**.
+    ```bash
+    curl -s "$BASE/api/analytics/metrics" | jq
+    ```
+
+    **Range compare** (optional): `GET /api/analytics/compare` requires all of `start_a`, `end_a`, `start_b`, and `end_b` (ISO 8601). Use `/docs` to try it interactively.
+
+12. **Analytics PDF** — writes a file; omit `-s` if you want HTTP headers.
+    ```bash
+    curl -sS -o /tmp/b2-report.pdf "$BASE/api/analytics/report/pdf"
+    ```
+
+13. **ST-GCN forecast** — defaults 10 min horizon, 15 min lookback. Returns **404** if there is no recent per-lane data for the camera, or the camera is outside the ST-GCN topology; **503** if the model bundle or checkpoint is missing or inference fails.
+    ```bash
+    curl -s "$BASE/api/predict/congestion?camera_id=cam_01" | jq
+    curl -s "$BASE/api/predict/congestion?camera_id=cam_01&horizon_minutes=10&lookback_minutes=15" | jq
+    ```
+
+14. **Admin thresholds (optional)** — uses `ADMIN_API_KEY` from Compose (example: `my-secret-123`).
+    ```bash
+    curl -s -H "X-Admin-Token: my-secret-123" "$BASE/api/admin/thresholds" | jq
+    ```
+
+15. **WebSockets (optional)** — install [`websocat`](https://github.com/vi/websocat). Use `ws://` (not `http://`).
+    ```bash
+    websocat "ws://localhost:18001/ws/metrics"
+    websocat "ws://localhost:18001/ws/events"
+    websocat "ws://localhost:18001/ws/metrics?camera_id=cam_01"
+    ```
+
+16. **Prometheus scrape (optional)**.
+    ```bash
+    curl -s "$BASE/metrics" | head
+    curl -s "http://localhost:9100/metrics" | head   # processor; only if port 9100 is published
+    ```
 
 ## Configuration
 
