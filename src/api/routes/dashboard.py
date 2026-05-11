@@ -8,7 +8,7 @@ from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
 from shared.db import get_db
-from shared.models import TrafficEvent, TrafficMetric
+from shared.models import AlertRecord, CameraRegistry, TrafficEvent, TrafficMetric
 
 router = APIRouter()
 
@@ -40,21 +40,31 @@ def _latest_camera_metrics(db: Session) -> list[TrafficMetric]:
 
 @router.get("/api/dashboard/summary")
 def dashboard_summary(db: Session = Depends(get_db)) -> dict:
-    """KPI summary across all cameras: counts, average speed, congestion mix."""
-    rows = _latest_camera_metrics(db)
+    """Dashboard KPIs for B3 summary card."""
+    five_min_cutoff = datetime.now(timezone.utc) - timedelta(minutes=5)
+    last_day_cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
 
+    speed_score = db.execute(
+        select(
+            func.coalesce(func.avg(TrafficMetric.avg_speed_kmh), 0.0).label("avg_speed"),
+            func.coalesce(func.avg(TrafficMetric.congestion_score), 0.0).label("avg_score"),
+        ).where(TrafficMetric.window_start >= five_min_cutoff, TrafficMetric.lane_id.is_(None))
+    ).one()
+
+    active_alerts = db.execute(
+        select(func.count(AlertRecord.id)).where(AlertRecord.resolved_at.is_(None))
+    ).scalar_one()
+    total_incidents_24h = db.execute(
+        select(func.count(AlertRecord.id)).where(AlertRecord.triggered_at >= last_day_cutoff)
+    ).scalar_one()
+    rows = _latest_camera_metrics(db)
     total_cameras = len(rows)
     total_vehicles = sum((r.vehicle_count or 0) for r in rows)
-
-    speeds = [r.avg_speed_kmh for r in rows if r.avg_speed_kmh is not None]
-    avg_speed = round(sum(speeds) / len(speeds), 2) if speeds else 0.0
-
     level_counts: dict[str, int] = {"LOW": 0, "MODERATE": 0, "HIGH": 0, "SEVERE": 0}
     for r in rows:
         level_counts[r.congestion_level or "LOW"] = (
             level_counts.get(r.congestion_level or "LOW", 0) + 1
         )
-
     worst_camera = None
     if rows:
         worst = max(rows, key=lambda r: _LEVEL_RANK.get(r.congestion_level or "LOW", 0))
@@ -66,9 +76,13 @@ def dashboard_summary(db: Session = Depends(get_db)) -> dict:
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "active_alerts": int(active_alerts or 0),
+        "total_incidents_24h": int(total_incidents_24h or 0),
+        "average_speed_kmh_5m": round(float(speed_score.avg_speed or 0.0), 2),
+        "average_congestion_score_5m": round(float(speed_score.avg_score or 0.0), 4),
         "total_cameras_active": total_cameras,
         "total_vehicles_last_window": total_vehicles,
-        "average_speed_kmh": avg_speed,
+        "average_speed_kmh": round(float(speed_score.avg_speed or 0.0), 2),
         "congestion_breakdown": level_counts,
         "worst_camera": worst_camera,
     }
@@ -109,17 +123,35 @@ def map_heatmap(
             func.avg(TrafficMetric.congestion_score).label("score"),
             func.avg(TrafficMetric.vehicle_count).label("avg_count"),
             func.max(TrafficMetric.window_end).label("last_window"),
+            CameraRegistry.latitude,
+            CameraRegistry.longitude,
+            CameraRegistry.road_segment,
         )
+        .join(CameraRegistry, CameraRegistry.camera_id == TrafficMetric.camera_id)
         .where(
             TrafficMetric.lane_id.is_(None),
             TrafficMetric.window_start >= cutoff,
         )
-        .group_by(TrafficMetric.camera_id)
+        .group_by(
+            TrafficMetric.camera_id,
+            CameraRegistry.latitude,
+            CameraRegistry.longitude,
+            CameraRegistry.road_segment,
+        )
     )
     rows = db.execute(stmt).all()
+    max_vehicle_count = max((float(r.avg_count or 0.0) for r in rows), default=0.0)
     points = [
         {
             "camera_id": r.camera_id,
+            "latitude": float(r.latitude),
+            "longitude": float(r.longitude),
+            "road_segment": r.road_segment,
+            "weight": round(
+                min(max((float(r.avg_count or 0.0) / max_vehicle_count), 0.0), 1.0), 4
+            )
+            if max_vehicle_count > 0
+            else 0.0,
             "intensity": round(float(r.score or 0.0), 4),
             "avg_vehicle_count": round(float(r.avg_count or 0.0), 2),
             "last_window": r.last_window.isoformat() if r.last_window else None,
@@ -138,9 +170,19 @@ def map_incidents(
 
     Pass ?severity=HIGH|SEVERE|MODERATE|LOW to filter further.
     """
-    rows = _latest_camera_metrics(db)
+    rows = db.execute(
+        select(TrafficMetric, CameraRegistry)
+        .join(CameraRegistry, CameraRegistry.camera_id == TrafficMetric.camera_id)
+        .where(TrafficMetric.lane_id.is_(None))
+        .order_by(TrafficMetric.window_start.desc())
+    ).all()
+    latest_by_camera: dict[str, tuple[TrafficMetric, CameraRegistry]] = {}
+    for metric, camera in rows:
+        if metric.camera_id not in latest_by_camera:
+            latest_by_camera[metric.camera_id] = (metric, camera)
+
     incidents: list[dict] = []
-    for r in rows:
+    for r, camera in latest_by_camera.values():
         level = r.congestion_level or "LOW"
         if severity is None and level not in ("HIGH", "SEVERE"):
             continue
@@ -149,6 +191,9 @@ def map_incidents(
         incidents.append(
             {
                 "camera_id": r.camera_id,
+                "latitude": camera.latitude,
+                "longitude": camera.longitude,
+                "road_segment": camera.road_segment,
                 "severity": level,
                 "score": r.congestion_score,
                 "vehicle_count": r.vehicle_count or 0,

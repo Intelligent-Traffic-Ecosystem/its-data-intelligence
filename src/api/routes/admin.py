@@ -10,9 +10,12 @@ from api.event_bus import bus
 from api.websocket import manager
 from shared.config import settings
 from shared.db import get_db
-from shared.models import AdminThreshold, AuditLog, MonitoringZone
+from shared.models import AdminThreshold, AuditLog, CameraRegistry, MonitoringZone
 from shared.schemas import (
     BroadcastNotification,
+    CameraRegistryCreate,
+    CameraRegistryOut,
+    CameraRegistryUpdate,
     Thresholds,
     ZoneCreate,
     ZoneOut,
@@ -103,6 +106,20 @@ def _normalize_coordinates(points: list[dict]) -> list[dict]:
     if points[0] != points[-1]:
         return points + [points[0]]
     return points
+
+
+def _camera_to_out(camera: CameraRegistry) -> CameraRegistryOut:
+    return CameraRegistryOut(
+        id=camera.id,
+        camera_id=camera.camera_id,
+        name=camera.name,
+        latitude=camera.latitude,
+        longitude=camera.longitude,
+        road_segment=camera.road_segment,
+        description=camera.description,
+        created_at=camera.created_at,
+        updated_at=camera.updated_at,
+    )
 
 
 @router.get("/thresholds", response_model=Thresholds)
@@ -300,3 +317,79 @@ async def broadcast_notification(
     db.commit()
 
     return {"status": "queued", "recipients": len(manager.operator_active)}
+
+
+@router.get("/cameras", response_model=list[CameraRegistryOut])
+def list_camera_registry(
+    db: Session = Depends(get_db),
+    _: AdminActor = Depends(require_admin),
+):
+    rows = db.execute(select(CameraRegistry).order_by(CameraRegistry.id.asc())).scalars().all()
+    return [_camera_to_out(row) for row in rows]
+
+
+@router.post("/cameras", response_model=CameraRegistryOut, status_code=status.HTTP_201_CREATED)
+def create_camera_registry(
+    payload: CameraRegistryCreate,
+    db: Session = Depends(get_db),
+    actor: AdminActor = Depends(require_admin),
+):
+    existing = (
+        db.execute(
+            select(CameraRegistry).where(CameraRegistry.camera_id == payload.camera_id)
+        ).scalar_one_or_none()
+    )
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="camera_id already exists"
+        )
+
+    row = CameraRegistry(**payload.model_dump())
+    db.add(row)
+    _log_audit(
+        db, actor.actor_id, "cameras.create", "cameras", payload.camera_id, payload.model_dump()
+    )
+    db.commit()
+    db.refresh(row)
+    return _camera_to_out(row)
+
+
+@router.put("/cameras/{camera_id}", response_model=CameraRegistryOut)
+def update_camera_registry(
+    camera_id: str,
+    payload: CameraRegistryUpdate,
+    db: Session = Depends(get_db),
+    actor: AdminActor = Depends(require_admin),
+):
+    row = (
+        db.execute(select(CameraRegistry).where(CameraRegistry.camera_id == camera_id))
+        .scalar_one_or_none()
+    )
+    if row is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Camera not found")
+
+    updates = payload.model_dump(exclude_unset=True)
+    for key, value in updates.items():
+        setattr(row, key, value)
+
+    _log_audit(db, actor.actor_id, "cameras.update", "cameras", camera_id, updates)
+    db.commit()
+    db.refresh(row)
+    return _camera_to_out(row)
+
+
+@router.delete("/cameras/{camera_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_camera_registry(
+    camera_id: str,
+    db: Session = Depends(get_db),
+    actor: AdminActor = Depends(require_admin),
+):
+    row = (
+        db.execute(select(CameraRegistry).where(CameraRegistry.camera_id == camera_id))
+        .scalar_one_or_none()
+    )
+    if row is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Camera not found")
+    db.delete(row)
+    _log_audit(db, actor.actor_id, "cameras.delete", "cameras", camera_id, None)
+    db.commit()

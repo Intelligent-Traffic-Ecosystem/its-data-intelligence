@@ -119,3 +119,49 @@ class AlertAcknowledgement(Base):
     acknowledged_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (Index("ix_alert_acknowledgements_alert_id", "alert_id"),)
+
+
+class CameraRegistry(Base):
+    __tablename__ = "cameras"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    camera_id: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, nullable=False)
+    road_segment: Mapped[str | None] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class AlertRecord(Base):
+    __tablename__ = "alerts"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    severity: Mapped[str] = mapped_column(Text, nullable=False)
+    alert_type: Mapped[str] = mapped_column(Text, nullable=False)
+    camera_id: Mapped[str] = mapped_column(Text, nullable=False)
+    road_segment: Mapped[str | None] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    congestion_level: Mapped[str | None] = mapped_column(Text)
+    congestion_score: Mapped[float | None] = mapped_column(Float)
+    triggered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    acknowledged_by: Mapped[str | None] = mapped_column(Text)
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    payload: Mapped[str | None] = mapped_column(Text)
+
+    __table_args__ = (
+        Index("ix_alerts_severity", "severity"),
+        Index("ix_alerts_road_segment", "road_segment"),
+        Index("ix_alerts_alert_type", "alert_type"),
+        Index("ix_alerts_camera_id", "camera_id"),
+        Index("ix_alerts_triggered_at", "triggered_at"),
+        Index("ix_alerts_resolved_at", "resolved_at"),
+    )

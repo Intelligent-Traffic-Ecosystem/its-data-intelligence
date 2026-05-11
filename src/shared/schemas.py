@@ -131,20 +131,17 @@ class BroadcastNotification(BaseModel):
 
 
 class AlertOutput(BaseModel):
-    alert_id: str
+    id: int
     camera_id: str
-    road_segment: str
-    lane_id: int | None = None
+    road_segment: str | None = None
     alert_type: str
     severity: str
+    title: str
     message: str
-    window_start: datetime
-    window_end: datetime
-    congestion_level: str
-    congestion_score: float
-    vehicle_count: int
-    avg_speed_kmh: float
-    queue_length: int
+    congestion_level: str | None = None
+    congestion_score: float | None = None
+    triggered_at: datetime
+    resolved_at: datetime | None = None
     acknowledged: bool
     acknowledged_by: str | None = None
     acknowledged_at: datetime | None = None
@@ -155,10 +152,39 @@ class AlertAcknowledgeRequest(BaseModel):
 
 
 class AlertAcknowledgeResponse(BaseModel):
-    alert_id: str
+    alert_id: int
     admin_id: str
     acknowledged_at: datetime
     status: str
+
+
+class CameraRegistryCreate(BaseModel):
+    camera_id: str = Field(min_length=1, max_length=200)
+    name: str = Field(min_length=1, max_length=200)
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
+    road_segment: str | None = Field(default=None, max_length=500)
+    description: str | None = Field(default=None, max_length=2000)
+
+
+class CameraRegistryUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
+    road_segment: str | None = Field(default=None, max_length=500)
+    description: str | None = Field(default=None, max_length=2000)
+
+
+class CameraRegistryOut(BaseModel):
+    id: int
+    camera_id: str
+    name: str
+    latitude: float
+    longitude: float
+    road_segment: str | None = None
+    description: str | None = None
+    created_at: datetime
+    updated_at: datetime
 
 
 # --- Analytics ---
