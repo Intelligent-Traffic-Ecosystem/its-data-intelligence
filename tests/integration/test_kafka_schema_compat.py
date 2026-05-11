@@ -32,7 +32,7 @@ def test_mock_producer_events_are_valid(kafka_container):
     sent = 0
     for i in range(100):
         event = generate_event(
-            camera_id=f"cam_{i % 4:02d}",
+            camera_id=f"cam{(i % 4) + 1}",
             vehicle_counter=i,
             with_lane=(i % 5 == 0),
             include_speed=(i % 7 != 0),
