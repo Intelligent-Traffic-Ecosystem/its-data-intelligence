@@ -35,7 +35,7 @@ def get_current_metrics(
     """Get the latest aggregated metrics for a specific camera."""
     stmt = (
         select(TrafficMetric)
-        .where(TrafficMetric.camera_id == camera_id)
+        .where(TrafficMetric.camera_id == camera_id, TrafficMetric.lane_id.is_(None))
         .order_by(TrafficMetric.window_start.desc())
         .limit(1)
     )
@@ -68,6 +68,7 @@ def get_metrics_history(
         select(TrafficMetric)
         .where(
             TrafficMetric.camera_id == camera_id,
+            TrafficMetric.lane_id.is_(None),
             TrafficMetric.window_start >= start,
             TrafficMetric.window_start <= end,
         )

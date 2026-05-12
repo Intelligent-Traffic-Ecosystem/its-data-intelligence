@@ -15,7 +15,7 @@ def list_cameras(db: Session = Depends(get_db)):
     stmt = select(
         TrafficMetric.camera_id,
         func.max(TrafficMetric.window_end).label("last_seen"),
-    ).group_by(TrafficMetric.camera_id)
+    ).where(TrafficMetric.lane_id.is_(None)).group_by(TrafficMetric.camera_id)
 
     rows = db.execute(stmt).all()
     return [CameraInfo(camera_id=row.camera_id, last_seen=row.last_seen) for row in rows]

@@ -28,7 +28,11 @@ def _default_window() -> tuple[datetime, datetime]:
 
 
 def _window_filters(start: datetime, end: datetime):
-    return (TrafficMetric.window_start >= start, TrafficMetric.window_start <= end)
+    return (
+        TrafficMetric.lane_id.is_(None),
+        TrafficMetric.window_start >= start,
+        TrafficMetric.window_start <= end,
+    )
 
 
 def _incident_case():

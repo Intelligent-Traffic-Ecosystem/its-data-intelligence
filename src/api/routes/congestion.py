@@ -20,14 +20,19 @@ def get_current_congestion(db: Session = Depends(get_db)):
             TrafficMetric.camera_id,
             func.max(TrafficMetric.window_start).label("max_ws"),
         )
+        .where(TrafficMetric.lane_id.is_(None))
         .group_by(TrafficMetric.camera_id)
         .subquery()
     )
 
-    stmt = select(TrafficMetric).join(
-        latest,
-        (TrafficMetric.camera_id == latest.c.camera_id)
-        & (TrafficMetric.window_start == latest.c.max_ws),
+    stmt = (
+        select(TrafficMetric)
+        .join(
+            latest,
+            (TrafficMetric.camera_id == latest.c.camera_id)
+            & (TrafficMetric.window_start == latest.c.max_ws),
+        )
+        .where(TrafficMetric.lane_id.is_(None))
     )
 
     rows = db.execute(stmt).scalars().all()
