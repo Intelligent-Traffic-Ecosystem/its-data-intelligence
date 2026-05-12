@@ -1,20 +1,21 @@
 """
 Mock alert generator for development / standalone mode.
 
-Seeds the database with realistic alerts at startup and periodically
-generates new ones so the alert section always has data to display.
+Seeds the database with realistic alerts and smooth traffic metrics at startup,
+and periodically generates new alerts so the UI always has fresh data.
 """
 
 import asyncio
 import json
 import logging
+import math
 import random
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
 from shared.db import SessionLocal
-from shared.models import AlertRecord
+from shared.models import AlertRecord, TrafficMetric
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +140,101 @@ def seed_alerts(db: Session) -> None:
     db.add_all(records)
     db.commit()
     logger.info("mock_alerts: seeded %d alerts", len(records))
+
+
+def _congestion_score_at(hour: float, camera_index: int) -> float:
+    """Return a smooth congestion score [0-100] for a given hour using a diurnal model.
+
+    Two rush-hour peaks (8 am and 6 pm) with Gaussian envelopes sit on a low
+    overnight baseline.  Each camera has a slight phase/amplitude offset so the
+    cameras don't all peak identically.
+    """
+    # Small per-camera offsets so curves are distinct but similar
+    phase_shift = camera_index * 0.3   # hours
+    amp_scale   = 1.0 - camera_index * 0.04
+
+    morning_peak = 65 * amp_scale * math.exp(-0.5 * ((hour - (8.0 + phase_shift)) / 1.4) ** 2)
+    evening_peak = 72 * amp_scale * math.exp(-0.5 * ((hour - (18.0 + phase_shift * 0.5)) / 1.6) ** 2)
+    baseline = 12.0
+    return min(100.0, max(0.0, baseline + morning_peak + evening_peak))
+
+
+def _congestion_level(score: float) -> str:
+    if score >= 75:
+        return "SEVERE"
+    if score >= 50:
+        return "HIGH"
+    if score >= 25:
+        return "MODERATE"
+    return "LOW"
+
+
+def seed_traffic_metrics(db: Session) -> None:
+    """Seed 48 hours of smooth diurnal traffic metrics if the table is empty."""
+    from sqlalchemy import select, func as sqlfunc
+
+    count = db.execute(select(sqlfunc.count()).select_from(TrafficMetric)).scalar()
+    if count and count > 0:
+        logger.info("mock_traffic: %d traffic_metrics rows already exist, skipping seed", count)
+        return
+
+    logger.info("mock_traffic: seeding 48 h of smooth traffic metrics")
+    window_minutes = 5
+    now = datetime.now(UTC).replace(second=0, microsecond=0)
+    # Round down to nearest 5-minute boundary
+    now -= timedelta(minutes=now.minute % window_minutes)
+
+    cameras = [c["id"] for c in MOCK_CAMERAS]
+    camera_base_speed = {
+        "cam1": 42.0, "cam2": 38.0, "cam3": 50.0, "cam4": 34.0,
+        "cam5": 46.0, "cam6": 55.0, "cam7": 32.0, "cam8": 40.0,
+    }
+
+    records = []
+    n_windows = int(48 * 60 / window_minutes)  # 48 hours of 5-min windows
+
+    for cam_idx, cam_id in enumerate(cameras):
+        base_speed = camera_base_speed.get(cam_id, 40.0)
+        for w in range(n_windows):
+            w_start = now - timedelta(minutes=(n_windows - w) * window_minutes)
+            w_end   = w_start + timedelta(minutes=window_minutes)
+
+            # Fractional hour including minutes
+            hour_frac = w_start.hour + w_start.minute / 60.0
+
+            base_score  = _congestion_score_at(hour_frac, cam_idx)
+            # Small Gaussian jitter — std dev = 2.5 so there's texture without spikes
+            noise       = random.gauss(0, 2.5)
+            score       = round(min(100.0, max(0.0, base_score + noise)), 1)
+
+            # Speed inversely proportional to congestion
+            speed = round(base_speed * (1.0 - score / 130.0) + random.gauss(0, 1.0), 1)
+            speed = max(3.0, speed)
+
+            # Vehicle count scales with congestion
+            vehicle_count = int(5 + score * 0.7 + random.gauss(0, 2))
+            vehicle_count = max(0, vehicle_count)
+
+            queue_length  = int(max(0, (score - 40) * 0.4 + random.gauss(0, 1)))
+            stopped_ratio = round(max(0.0, min(1.0, (score - 50) / 100.0 + random.gauss(0, 0.02))), 3)
+
+            records.append(TrafficMetric(
+                camera_id=cam_id,
+                window_start=w_start,
+                window_end=w_end,
+                lane_id=None,
+                vehicle_count=vehicle_count,
+                counts_by_class=None,
+                avg_speed_kmh=speed,
+                stopped_ratio=stopped_ratio,
+                queue_length=queue_length,
+                congestion_level=_congestion_level(score),
+                congestion_score=score,
+            ))
+
+    db.bulk_save_objects(records)
+    db.commit()
+    logger.info("mock_traffic: seeded %d traffic_metric rows across %d cameras", len(records), len(cameras))
 
 
 def generate_new_alert(db: Session) -> AlertRecord:

@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 
-from api.mock_alerts import run_mock_alert_generator, seed_alerts
+from api.mock_alerts import run_mock_alert_generator, seed_alerts, seed_traffic_metrics
 from api.prometheus import (
     PROCESSING_ERRORS,
     REQUEST_COUNT,
@@ -38,6 +38,7 @@ async def lifespan(app: FastAPI):
     with SessionLocal() as db:
         load_thresholds_from_db(db)
         seed_alerts(db)
+        seed_traffic_metrics(db)
     start_event_producers()
     # Generate a new mock alert every 45 s so the UI always has fresh data
     asyncio.create_task(run_mock_alert_generator(interval_seconds=45))
