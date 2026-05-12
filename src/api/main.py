@@ -1,6 +1,6 @@
 import asyncio
-from contextlib import asynccontextmanager
 import time
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 
@@ -9,8 +9,8 @@ from api.prometheus import (
     PROCESSING_ERRORS,
     REQUEST_COUNT,
     REQUEST_LATENCY,
+    router as prom_router,
 )
-from api.prometheus import router as prom_router
 from api.routes import (
     admin,
     alerts,
