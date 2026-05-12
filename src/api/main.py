@@ -1,8 +1,10 @@
+import asyncio
 import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 
+from api.mock_alerts import run_mock_alert_generator, seed_alerts
 from api.prometheus import (
     PROCESSING_ERRORS,
     REQUEST_COUNT,
@@ -33,11 +35,12 @@ configure_logging("b2-api")
 async def lifespan(app: FastAPI):
     configure_logging("b2-api")
     Base.metadata.create_all(bind=engine)
-    # Load admin thresholds from database
     with SessionLocal() as db:
         load_thresholds_from_db(db)
-    # Spawn real-time event producers (#35)
+        seed_alerts(db)
     start_event_producers()
+    # Generate a new mock alert every 45 s so the UI always has fresh data
+    asyncio.create_task(run_mock_alert_generator(interval_seconds=45))
     yield
 
 

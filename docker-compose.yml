@@ -3,6 +3,7 @@ services:
   kafka:
     image: soldevelo/kafka
     ports:
+      - "9092:9092" # PLAINTEXT - for clients on the docker network (b2-stream-processor, b2-api)
       - "29094:29092"
     environment:
       KAFKA_CFG_NODE_ID: 1

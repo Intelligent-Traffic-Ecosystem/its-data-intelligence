@@ -7,7 +7,6 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from api.routes.admin import AdminActor, require_admin
 from shared.db import get_db
 from shared.models import AlertRecord
 from shared.schemas import (
@@ -65,6 +64,36 @@ def _query_alert_metrics(
     ]
 
 
+@router.get("/active", response_model=list[AlertOutput])
+def get_active_alerts(db: Session = Depends(get_db)):
+    """Return all alerts that have not yet been acknowledged."""
+    stmt = (
+        select(AlertRecord)
+        .where(AlertRecord.acknowledged_at.is_(None))
+        .order_by(AlertRecord.triggered_at.desc())
+    )
+    rows = db.execute(stmt).scalars().all()
+    return [
+        AlertOutput(
+            id=row.id,
+            camera_id=row.camera_id,
+            road_segment=row.road_segment,
+            alert_type=row.alert_type,
+            severity=row.severity,
+            title=row.title,
+            message=row.message,
+            congestion_level=row.congestion_level,
+            congestion_score=row.congestion_score,
+            triggered_at=row.triggered_at,
+            resolved_at=row.resolved_at,
+            acknowledged=False,
+            acknowledged_by=None,
+            acknowledged_at=None,
+        )
+        for row in rows
+    ]
+
+
 @router.get("/history", response_model=list[AlertOutput])
 def get_alert_history(
     severity: str | None = Query(None),
@@ -83,7 +112,6 @@ def acknowledge_alert(
     id: int,
     payload: AlertAcknowledgeRequest,
     db: Session = Depends(get_db),
-    actor: AdminActor = Depends(require_admin),
 ):
     alert = db.get(AlertRecord, id)
     if alert is None:
@@ -97,14 +125,14 @@ def acknowledge_alert(
             status="already_acknowledged",
         )
 
-    alert.acknowledged_by = actor.actor_id or payload.admin_id
+    alert.acknowledged_by = payload.admin_id
     alert.acknowledged_at = datetime.now(UTC)
     db.commit()
     db.refresh(alert)
 
     return AlertAcknowledgeResponse(
         alert_id=alert.id,
-        admin_id=alert.acknowledged_by or payload.admin_id,
+        admin_id=alert.acknowledged_by,
         acknowledged_at=alert.acknowledged_at,
         status="acknowledged",
     )
