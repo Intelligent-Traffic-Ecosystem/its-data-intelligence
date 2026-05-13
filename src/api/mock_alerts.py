@@ -143,28 +143,29 @@ def seed_alerts(db: Session) -> None:
 
 
 def _congestion_score_at(hour: float, camera_index: int) -> float:
-    """Return a smooth congestion score [0-100] for a given hour using a diurnal model.
+    """Return a smooth congestion score [0.0-1.0] for a given hour using a diurnal model.
 
     Two rush-hour peaks (8 am and 6 pm) with Gaussian envelopes sit on a low
     overnight baseline.  Each camera has a slight phase/amplitude offset so the
-    cameras don't all peak identically.
+    cameras don't all peak identically.  Matches the 0-1 scale the stream
+    processor writes so the frontend's ×100 display multiplication works correctly.
     """
-    # Small per-camera offsets so curves are distinct but similar
     phase_shift = camera_index * 0.3   # hours
     amp_scale   = 1.0 - camera_index * 0.04
 
-    morning_peak = 65 * amp_scale * math.exp(-0.5 * ((hour - (8.0 + phase_shift)) / 1.4) ** 2)
-    evening_peak = 72 * amp_scale * math.exp(-0.5 * ((hour - (18.0 + phase_shift * 0.5)) / 1.6) ** 2)
-    baseline = 12.0
-    return min(100.0, max(0.0, baseline + morning_peak + evening_peak))
+    morning_peak = 0.65 * amp_scale * math.exp(-0.5 * ((hour - (8.0 + phase_shift)) / 1.4) ** 2)
+    evening_peak = 0.72 * amp_scale * math.exp(-0.5 * ((hour - (18.0 + phase_shift * 0.5)) / 1.6) ** 2)
+    baseline = 0.12
+    return min(1.0, max(0.0, baseline + morning_peak + evening_peak))
 
 
 def _congestion_level(score: float) -> str:
-    if score >= 75:
+    # Thresholds match congestion.py in the stream processor (0-1 scale)
+    if score >= 0.80:
         return "SEVERE"
-    if score >= 50:
+    if score >= 0.55:
         return "HIGH"
-    if score >= 25:
+    if score >= 0.30:
         return "MODERATE"
     return "LOW"
 
@@ -203,20 +204,20 @@ def seed_traffic_metrics(db: Session) -> None:
             hour_frac = w_start.hour + w_start.minute / 60.0
 
             base_score  = _congestion_score_at(hour_frac, cam_idx)
-            # Small Gaussian jitter — std dev = 2.5 so there's texture without spikes
-            noise       = random.gauss(0, 2.5)
-            score       = round(min(100.0, max(0.0, base_score + noise)), 1)
+            # Small Gaussian jitter — std dev = 0.025 so there's texture without spikes
+            noise       = random.gauss(0, 0.025)
+            score       = round(min(1.0, max(0.0, base_score + noise)), 4)
 
-            # Speed inversely proportional to congestion
-            speed = round(base_speed * (1.0 - score / 130.0) + random.gauss(0, 1.0), 1)
+            # Speed inversely proportional to congestion (score 0-1)
+            speed = round(base_speed * (1.0 - score * 0.75) + random.gauss(0, 1.0), 1)
             speed = max(3.0, speed)
 
-            # Vehicle count scales with congestion
-            vehicle_count = int(5 + score * 0.7 + random.gauss(0, 2))
+            # Vehicle count scales with congestion (realistic 0-80 vehicles per 5-min window)
+            vehicle_count = int(5 + score * 70 + random.gauss(0, 2))
             vehicle_count = max(0, vehicle_count)
 
-            queue_length  = int(max(0, (score - 40) * 0.4 + random.gauss(0, 1)))
-            stopped_ratio = round(max(0.0, min(1.0, (score - 50) / 100.0 + random.gauss(0, 0.02))), 3)
+            queue_length  = int(max(0, (score - 0.4) * 40 + random.gauss(0, 1)))
+            stopped_ratio = round(max(0.0, min(1.0, max(0.0, score - 0.5) * 0.8 + random.gauss(0, 0.02))), 3)
 
             records.append(TrafficMetric(
                 camera_id=cam_id,
